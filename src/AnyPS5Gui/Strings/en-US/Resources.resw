@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Shared -->
+  <data name="Nav_Convert.Content" xml:space="preserve"><value>Convert</value></data>
+  <data name="Nav_Games.Content" xml:space="preserve"><value>Games</value></data>
+  <data name="Common_Browse.Content" xml:space="preserve"><value>Browse…</value></data>
+  <data name="Common_Cancel.Content" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Log_Copy.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Copy the log</value></data>
+  <data name="Log_Copy.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Copy the log</value></data>
+
+  <data name="Error_Title" xml:space="preserve"><value>Something went wrong</value></data>
+  <data name="Error_Details" xml:space="preserve"><value>The details were saved to {0}</value></data>
+  <data name="Error_Close" xml:space="preserve"><value>Close</value></data>
+
+  <!-- Convert page -->
+  <data name="Convert_Title.Text" xml:space="preserve"><value>Convert a game</value></data>
+  <data name="Convert_Intro.Text" xml:space="preserve"><value>Turn a dumped PS5 game into a Windows program with AnyPS5. The game has to be extracted and decrypted already: nothing is unpacked or decrypted here.</value></data>
+  <data name="Convert_ComponentsMissing.Title" xml:space="preserve"><value>AnyPS5 is not downloaded yet</value></data>
+  <data name="Convert_ComponentsMissing.Message" xml:space="preserve"><value>The relinker and the system libraries come from the AnyPS5 releases on GitHub (about 115 MB).</value></data>
+  <data name="Convert_Download.Content" xml:space="preserve"><value>Download</value></data>
+  <data name="Convert_GamePath.Header" xml:space="preserve"><value>Game folder</value></data>
+  <data name="Convert_GamePath.PlaceholderText" xml:space="preserve"><value>The folder that holds eboot.bin. You can also drop it on this page</value></data>
+  <data name="Convert_BrowseFolder.Content" xml:space="preserve"><value>Folder…</value></data>
+  <data name="Convert_BrowseFile.Content" xml:space="preserve"><value>File…</value></data>
+  <data name="Convert_Output.Header" xml:space="preserve"><value>Output folder</value></data>
+  <data name="Convert_LinkFiles.Content" xml:space="preserve"><value>Link the game files instead of copying them</value></data>
+  <data name="Convert_LinkFilesHelp.Text" xml:space="preserve"><value>Instant and takes no extra space, but the output has to be on the same NTFS drive as the game; otherwise the files are copied. A linked file is the dump's own file under a second name: do not edit it in place.</value></data>
+  <data name="Convert_ToIntel.Content" xml:space="preserve"><value>Convert for an Intel CPU</value></data>
+  <data name="Convert_ToIntelHelp.Text" xml:space="preserve"><value>Rewrites the AMD-only instructions in the game (--to-intel). Leave it off on an AMD CPU.</value></data>
+  <data name="Convert_WindowsGui.Content" xml:space="preserve"><value>No console window</value></data>
+  <data name="Convert_WindowsGuiHelp.Text" xml:space="preserve"><value>Started outside this app, the game opens without a console and writes its output to anyps5.log (--windows-gui).</value></data>
+  <data name="Convert_Advanced.Header" xml:space="preserve"><value>Advanced options</value></data>
+  <data name="Convert_UnusedFilter.Header" xml:space="preserve"><value>Unused imports</value></data>
+  <data name="Convert_UnusedFilter0.Content" xml:space="preserve"><value>Keep every import (default)</value></data>
+  <data name="Convert_UnusedFilter1.Content" xml:space="preserve"><value>Filter unused imports, keep the PLT (unused-filter=1)</value></data>
+  <data name="Convert_UnusedFilter2.Content" xml:space="preserve"><value>Strict analysis, compact the PLT (unused-filter=2)</value></data>
+  <data name="Convert_FrameRedZone.Content" xml:space="preserve"><value>Protect leaf functions from Windows exceptions (--frame-red-zone)</value></data>
+  <data name="Convert_WindowsDiagnostics.Content" xml:space="preserve"><value>Write start-up dependency diagnostics (--windows-diagnostics)</value></data>
+  <data name="Convert_TraceImports.Content" xml:space="preserve"><value>Trace system library calls (--trace-imports)</value></data>
+  <data name="Convert_Registry.Content" xml:space="preserve"><value>Write registry files (--registry)</value></data>
+  <data name="Convert_FunctionSymbolRoots.Content" xml:space="preserve"><value>Treat function symbols as entry points (--function-symbol-roots)</value></data>
+  <data name="Convert_FixedBase.Header" xml:space="preserve"><value>Fixed load address (--windows-fixed-base)</value></data>
+  <data name="Convert_FixedBase.PlaceholderText" xml:space="preserve"><value>For example 0x400000. Leave empty unless the game needs it</value></data>
+  <data name="Convert_SceModulePath.Header" xml:space="preserve"><value>Parent of the module folders (--sce-module-path)</value></data>
+  <data name="Convert_SceModulePath.PlaceholderText" xml:space="preserve"><value>Default: the folder of the executable</value></data>
+  <data name="Convert_ModuleDirectories.Header" xml:space="preserve"><value>Extra module folders, one per line (--module-dir)</value></data>
+  <data name="Convert_ModuleDirectories.PlaceholderText" xml:space="preserve"><value>For example Media/Plugins</value></data>
+  <data name="Convert_Executables.Header" xml:space="preserve"><value>Extra executables, one per line (--executable)</value></data>
+  <data name="Convert_Executables.PlaceholderText" xml:space="preserve"><value>For example picker/picker.bin</value></data>
+  <data name="Convert_PatchMode.Header" xml:space="preserve"><value>Game patches</value></data>
+  <data name="Convert_PatchAuto.Content" xml:space="preserve"><value>Use relinker-patches.toml when the game folder has one</value></data>
+  <data name="Convert_PatchNone.Content" xml:space="preserve"><value>Do not apply patches (--no-patches)</value></data>
+  <data name="Convert_PatchFromFile.Content" xml:space="preserve"><value>Use the patch file below (--patches)</value></data>
+  <data name="Convert_PatchFile.Header" xml:space="preserve"><value>Patch file</value></data>
+  <data name="Convert_ExtraArguments.Header" xml:space="preserve"><value>Extra relinker arguments</value></data>
+  <data name="Convert_ExtraArguments.PlaceholderText" xml:space="preserve"><value>Anything else, written as on a command line</value></data>
+  <data name="Convert_CommandExpander.Header" xml:space="preserve"><value>Command</value></data>
+  <data name="Convert_ShowInGames.Content" xml:space="preserve"><value>Show in Games</value></data>
+  <data name="Convert_ConvertButton.Content" xml:space="preserve"><value>Convert</value></data>
+  <data name="Convert_DryRunButton.Content" xml:space="preserve"><value>Dry run</value></data>
+  <data name="Convert_GameDetails" xml:space="preserve"><value>Executable: {0}
+Module folders: {1}</value></data>
+  <data name="Convert_PatchFileFound" xml:space="preserve"><value>This folder has a relinker-patches.toml. It is applied unless you choose otherwise under Advanced options.</value></data>
+  <data name="Issue_NoExecutable" xml:space="preserve"><value>No eboot.bin was found here. Choose the folder of an extracted game, or its executable with “File…”.</value></data>
+  <data name="Issue_WrappedExecutable" xml:space="preserve"><value>The executable is still a SELF container. The relinker needs a plain ELF: unwrap it first, for example with tools/unwrap_self.py from the AnyPS5 repository.</value></data>
+  <data name="Issue_NotAnElf" xml:space="preserve"><value>The executable is not an ELF file. It may still be encrypted.</value></data>
+  <data name="Issue_NoModuleDirectory" xml:space="preserve"><value>There is no sce_module, sce_modules or prx folder beside the executable. The relinker stops without one, unless you add a module folder under Advanced options (“.” is the game folder itself).</value></data>
+  <data name="Issue_BothModuleDirectories" xml:space="preserve"><value>The folder has both sce_module and sce_modules. The relinker accepts only one of them.</value></data>
+  <data name="Issue_WrappedModules" xml:space="preserve"><value>Modules that are still SELF containers: {0}. The relinker skips them; unwrap them if the game needs them.</value></data>
+  <data name="Convert_Failed" xml:space="preserve"><value>The relinker failed (exit code {0}). The log has the reason.</value></data>
+  <data name="Convert_DryRunDone" xml:space="preserve"><value>Dry run finished: nothing was written.</value></data>
+  <data name="Convert_LibrariesPlaced" xml:space="preserve"><value>System libraries: {0}</value></data>
+  <data name="Convert_GameFilesPlaced" xml:space="preserve"><value>Game files: {0}</value></data>
+  <data name="Convert_MirrorSummary" xml:space="preserve"><value>{0} linked, {1} copied, {2} already in place</value></data>
+  <data name="Convert_NoLibraries" xml:space="preserve"><value>No system libraries were placed. Copy AnyPS5's Windows libraries into the libs folder before starting the game.</value></data>
+  <data name="Convert_Done" xml:space="preserve"><value>Converted: {0}</value></data>
+  <data name="Convert_Cancelled" xml:space="preserve"><value>Cancelled. The output folder may hold an incomplete conversion.</value></data>
+  <data name="Problem_NoExecutable" xml:space="preserve"><value>There is no executable to convert.</value></data>
+  <data name="Problem_RelinkerMissing" xml:space="preserve"><value>The relinker was not found. Download AnyPS5, or check the path of your own build in Settings.</value></data>
+  <data name="Problem_OutputInsideGame" xml:space="preserve"><value>The output folder cannot be the game folder or be inside it.</value></data>
+  <data name="Problem_GameInsideOutput" xml:space="preserve"><value>The output folder cannot contain the game folder.</value></data>
+  <data name="Stage_Relinking" xml:space="preserve"><value>Running the relinker…</value></data>
+  <data name="Stage_Libraries" xml:space="preserve"><value>Placing the system libraries…</value></data>
+  <data name="Stage_GameFiles" xml:space="preserve"><value>Placing the game files…</value></data>
+
+  <!-- Games page -->
+  <data name="Games_Title.Text" xml:space="preserve"><value>Games</value></data>
+  <data name="Games_Empty.Text" xml:space="preserve"><value>No games yet. Convert one, or add a game you converted before.</value></data>
+  <data name="Games_AddExisting.Content" xml:space="preserve"><value>Add a converted game…</value></data>
+  <data name="Games_Launch.Content" xml:space="preserve"><value>Launch</value></data>
+  <data name="Games_Stop.Content" xml:space="preserve"><value>Stop</value></data>
+  <data name="Games_OpenFolder.Content" xml:space="preserve"><value>Open folder</value></data>
+  <data name="Games_Remove.Content" xml:space="preserve"><value>Remove from list</value></data>
+  <data name="Games_Display.Header" xml:space="preserve"><value>Display</value></data>
+  <data name="Games_Fullscreen.Header" xml:space="preserve"><value>Start in fullscreen</value></data>
+  <data name="Games_Fullscreen.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Games_Fullscreen.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Games_DisplayIndex.Header" xml:space="preserve"><value>Display number (0 is the first)</value></data>
+  <data name="Games_DisplayIndex.PlaceholderText" xml:space="preserve"><value>First display</value></data>
+  <data name="Games_Fsr.Header" xml:space="preserve"><value>FSR 1.0 upscaling</value></data>
+  <data name="Games_Fsr.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Games_Fsr.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Games_FsrSharpness.Header" xml:space="preserve"><value>FSR sharpness (0 is the sharpest)</value></data>
+  <data name="Games_PresentMode.Header" xml:space="preserve"><value>Presentation</value></data>
+  <data name="Games_PresentDefault.Content" xml:space="preserve"><value>V-Sync (default)</value></data>
+  <data name="Games_PresentLatestReady.Content" xml:space="preserve"><value>Latest ready frame, no tearing</value></data>
+  <data name="Games_PresentMailbox.Content" xml:space="preserve"><value>Mailbox, no tearing</value></data>
+  <data name="Games_PresentImmediate.Content" xml:space="preserve"><value>Immediate, can tear</value></data>
+  <data name="Games_FpsLimit.Header" xml:space="preserve"><value>Frame rate limit (0 for none)</value></data>
+  <data name="Games_OutputResolution.Header" xml:space="preserve"><value>Resolution the game is told</value></data>
+  <data name="Games_ResolutionDefault.Content" xml:space="preserve"><value>The display's own</value></data>
+  <data name="Games_Gpu.Header" xml:space="preserve"><value>GPU</value></data>
+  <data name="Games_Gpu.PlaceholderText" xml:space="preserve"><value>Part of its name, such as RTX. Empty: chosen automatically</value></data>
+  <data name="Games_Audio.Header" xml:space="preserve"><value>Sound, controller and language</value></data>
+  <data name="Games_Volume.Header" xml:space="preserve"><value>Volume</value></data>
+  <data name="Games_MuteOnFocusLoss.Header" xml:space="preserve"><value>Mute while in the background</value></data>
+  <data name="Games_MuteOnFocusLoss.OnContent" xml:space="preserve"><value>On</value></data>
+  <data name="Games_MuteOnFocusLoss.OffContent" xml:space="preserve"><value>Off</value></data>
+  <data name="Games_Rumble.Header" xml:space="preserve"><value>Vibration strength</value></data>
+  <data name="Games_Language.Header" xml:space="preserve"><value>Console language</value></data>
+  <data name="Games_LanguageDefault" xml:space="preserve"><value>Default (English, United States)</value></data>
+  <data name="Games_LanguageAuto" xml:space="preserve"><value>Same as Windows</value></data>
+  <data name="Games_AdvancedExpander.Header" xml:space="preserve"><value>Advanced</value></data>
+  <data name="Games_HostReport.Content" xml:space="preserve"><value>Print a host report, for bug reports (ANYPS5_HOST_REPORT)</value></data>
+  <data name="Games_DisableShaderCache.Content" xml:space="preserve"><value>Disable the shader cache (ANYPS5_NO_SHADER_CACHE)</value></data>
+  <data name="Games_Mimalloc.Content" xml:space="preserve"><value>Use the mimalloc allocator (APS5_MIMALLOC)</value></data>
+  <data name="Games_DisableDozen.Content" xml:space="preserve"><value>Hide the D3D12 “Dozen” Vulkan driver, which crashes at start-up on some PCs</value></data>
+  <data name="Games_CustomEnvironment.Header" xml:space="preserve"><value>Other environment variables, one NAME=VALUE per line</value></data>
+  <data name="Games_CustomEnvironment.PlaceholderText" xml:space="preserve"><value>APS5_PROFILE_DRAW=1</value></data>
+  <data name="Games_Arguments.Header" xml:space="preserve"><value>Arguments for the game</value></data>
+  <data name="Games_EnvironmentPreview.Text" xml:space="preserve"><value>The game starts with:</value></data>
+  <data name="Games_NoEnvironment" xml:space="preserve"><value>(nothing set: AnyPS5's own defaults)</value></data>
+  <data name="Games_ExecutableMissing" xml:space="preserve"><value>{0} no longer exists. Convert the game again or remove it from the list.</value></data>
+  <data name="Games_Exited" xml:space="preserve"><value>The game ended with exit code {0} ({1}).</value></data>
+  <data name="Games_Stopped" xml:space="preserve"><value>Stopped.</value></data>
+
+  <!-- Settings page -->
+  <data name="Settings_Title.Text" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_ComponentsHeader.Text" xml:space="preserve"><value>AnyPS5</value></data>
+  <data name="Settings_ComponentsHelp.Text" xml:space="preserve"><value>The relinker and the Windows system libraries are downloaded from the AnyPS5 releases on GitHub. Converting a game again brings its libraries up to the version in use.</value></data>
+  <data name="Settings_ActiveVersion.Header" xml:space="preserve"><value>Version in use</value></data>
+  <data name="Settings_RemoveVersion.Content" xml:space="preserve"><value>Delete this version</value></data>
+  <data name="Settings_Release.Header" xml:space="preserve"><value>Version to download</value></data>
+  <data name="Settings_Release.PlaceholderText" xml:space="preserve"><value>The newest</value></data>
+  <data name="Settings_Check.Content" xml:space="preserve"><value>Check for versions</value></data>
+  <data name="Settings_Install.Content" xml:space="preserve"><value>Download</value></data>
+  <data name="Settings_CustomHeader.Text" xml:space="preserve"><value>Your own build</value></data>
+  <data name="Settings_CustomHelp.Text" xml:space="preserve"><value>If you build AnyPS5 yourself, point to your relinker and to the folder with its Windows libraries. They are used instead of the downloaded ones.</value></data>
+  <data name="Settings_CustomRelinker.Header" xml:space="preserve"><value>Relinker</value></data>
+  <data name="Settings_CustomLibs.Header" xml:space="preserve"><value>Libraries folder</value></data>
+  <data name="Settings_FoldersHeader.Text" xml:space="preserve"><value>Converted games</value></data>
+  <data name="Settings_OutputRoot.Header" xml:space="preserve"><value>Folder for converted games</value></data>
+  <data name="Settings_OutputRoot.PlaceholderText" xml:space="preserve"><value>Empty: next to each game's own folder</value></data>
+  <data name="Settings_OutputRootHelp.Text" xml:space="preserve"><value>Each game gets its own subfolder here. On the same drive as your dumps, game files can be linked instead of copied.</value></data>
+  <data name="Settings_AppearanceHeader.Text" xml:space="preserve"><value>Appearance</value></data>
+  <data name="Settings_Language.Header" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_LanguageSystem.Content" xml:space="preserve"><value>Same as Windows</value></data>
+  <data name="Settings_Theme.Header" xml:space="preserve"><value>Theme</value></data>
+  <data name="Settings_ThemeSystem.Content" xml:space="preserve"><value>Same as Windows</value></data>
+  <data name="Settings_ThemeLight.Content" xml:space="preserve"><value>Light</value></data>
+  <data name="Settings_ThemeDark.Content" xml:space="preserve"><value>Dark</value></data>
+  <data name="Settings_RestartNeeded.Message" xml:space="preserve"><value>The language changes the next time the app starts.</value></data>
+  <data name="Settings_HostHeader.Text" xml:space="preserve"><value>This PC</value></data>
+  <data name="Settings_HostOk" xml:space="preserve"><value>The CPU has every extension games need, and a Vulkan driver is installed.</value></data>
+  <data name="Settings_HostCpuMissing" xml:space="preserve"><value>The CPU lacks an extension that PS5 games use without checking. Converted games will stop at start-up.</value></data>
+  <data name="Settings_HostVulkanMissing" xml:space="preserve"><value>No Vulkan driver was found. Games need Vulkan 1.1 for graphics: update the GPU driver.</value></data>
+  <data name="Settings_AboutText.Text" xml:space="preserve"><value>A front end for AnyPS5, which ports PS5 executables to Windows without emulation. AnyPS5 does the work; this app only runs it and puts the files in place.</value></data>
+  <data name="Settings_LinkProject.Content" xml:space="preserve"><value>AnyPS5 project</value></data>
+  <data name="Settings_LinkUsage.Content" xml:space="preserve"><value>Usage</value></data>
+  <data name="Settings_LinkInput.Content" xml:space="preserve"><value>Keyboard and controller mapping</value></data>
+  <data name="Settings_LinkCompatibility.Content" xml:space="preserve"><value>Game compatibility</value></data>
+  <data name="Settings_Disclaimer.Text" xml:space="preserve"><value>A converted game is an ordinary program: it runs with your account's permissions and none of the console's sandbox. Convert and run only games you own and trust. This app is not affiliated with AnyPS5 or with Sony Interactive Entertainment.</value></data>
+  <data name="Settings_DataFolder.Content" xml:space="preserve"><value>Open data folder</value></data>
+  <data name="Components_NotInstalled" xml:space="preserve"><value>AnyPS5 is not downloaded yet.</value></data>
+  <data name="Components_Custom" xml:space="preserve"><value>Using your own relinker.</value></data>
+  <data name="Components_Using" xml:space="preserve"><value>Using AnyPS5 {0}.</value></data>
+  <data name="Components_NoRelease" xml:space="preserve"><value>No release with a Windows relinker and libraries was found.</value></data>
+  <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} is ready.</value></data>
+  <data name="Components_Checking" xml:space="preserve"><value>Asking GitHub for the AnyPS5 releases…</value></data>
+  <data name="Components_UpToDate" xml:space="preserve"><value>{0} is the newest version and is already downloaded.</value></data>
+  <data name="Components_Available" xml:space="preserve"><value>{0} is available.</value></data>
+  <data name="Components_Cancelled" xml:space="preserve"><value>Cancelled.</value></data>
+  <data name="Install_Relinker" xml:space="preserve"><value>Downloading the relinker… {0} / {1} MB</value></data>
+  <data name="Install_Libraries" xml:space="preserve"><value>Downloading the system libraries… {0} / {1} MB</value></data>
+  <data name="Install_Extracting" xml:space="preserve"><value>Unpacking the system libraries… {0} / {1}</value></data>
+</root>

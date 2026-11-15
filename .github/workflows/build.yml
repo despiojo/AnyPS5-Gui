@@ -1,0 +1,123 @@
+name: Build
+
+# Every push to main and every pull request is built and tested. A tag vX.Y.Z also makes the release
+# of that version; running it by hand with a version makes a draft release of it, whose tag is only
+# created when the draft is published.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths-ignore: ['docs/**', '**.md']
+  pull_request:
+    paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to make a draft release of (for example 1.2.0). Empty: only build.'
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      asset: ${{ steps.package.outputs.asset }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 11.0.x
+
+      - name: Version
+        id: version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $version = if ($env:REF_TYPE -eq 'tag') { $env:REF_NAME -replace '^v', '' } else { "$env:INPUT_VERSION".Trim() }
+          if ($version -and $version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$') { throw "'$version' is not a version like 1.2.0." }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      # The tests convert a small executable with AnyPS5's newest relinker and run the result, so a
+      # release of AnyPS5 that this app no longer drives correctly fails here and not on someone's PC.
+      - name: AnyPS5 relinker
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo boykopovar/AnyPS5 --pattern 'relinker-*.exe' --dir "$env:RUNNER_TEMP\anyps5"
+          $relinker = Get-ChildItem "$env:RUNNER_TEMP\anyps5\relinker-*.exe" | Select-Object -First 1
+          if (-not $relinker) { throw 'The newest AnyPS5 release has no relinker-*.exe.' }
+          "ANYPS5_RELINKER=$($relinker.FullName)" >> $env:GITHUB_ENV
+
+      - name: Test
+        run: dotnet test --project tests/AnyPS5Gui.Core.Tests -c Release
+
+      - name: Publish
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $version = if ($env:VERSION) { "-p:Version=$env:VERSION" } else { $null }
+          dotnet publish src/AnyPS5Gui -c Release -p:DebugType=none $version -o "$env:RUNNER_TEMP\publish\AnyPS5Gui"
+
+      - name: Smoke test
+        run: ./tests/smoke.ps1 -Exe "$env:RUNNER_TEMP\publish\AnyPS5Gui\AnyPS5Gui.exe" -Work "$env:RUNNER_TEMP\smoke"
+
+      # The app is a folder, not a single file: the zip holds that folder, ready to extract anywhere.
+      - name: Package
+        id: package
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $asset = if ($env:VERSION) { "AnyPS5Gui-$env:VERSION-win-x64.zip" } else { 'AnyPS5Gui-win-x64.zip' }
+          Compress-Archive -Path "$env:RUNNER_TEMP\publish\AnyPS5Gui" -DestinationPath "$env:RUNNER_TEMP\$asset"
+          "asset=$asset" >> $env:GITHUB_OUTPUT
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: AnyPS5Gui
+          path: ${{ runner.temp }}/${{ steps.package.outputs.asset }}
+          if-no-files-found: error
+          # The zip is already compressed.
+          compression-level: 0
+          retention-days: 3
+
+  release:
+    needs: build
+    if: needs.build.outputs.version != '' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # Only for the release notes.
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: AnyPS5Gui
+          path: asset
+
+      # The notes are docs/release-notes/vX.Y.Z.md. Without them, or when run by hand, the release
+      # stays a draft with generated notes, to be written and published from GitHub.
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ needs.build.outputs.version }}
+          VERSION: ${{ needs.build.outputs.version }}
+          ASSET: ${{ needs.build.outputs.asset }}
+          BY_TAG: ${{ github.ref_type == 'tag' }}
+        run: |
+          notes="docs/release-notes/$TAG.md"
+          options=(--title "AnyPS5 GUI $VERSION")
+          if [ -f "$notes" ]; then options+=(--notes-file "$notes"); else options+=(--generate-notes); fi
+          if [ "$BY_TAG" = true ]; then options+=(--verify-tag); else options+=(--target "$GITHUB_SHA"); fi
+          if [ "$BY_TAG" != true ] || [ ! -f "$notes" ]; then options+=(--draft); fi
+          gh release create "$TAG" "asset/$ASSET" "${options[@]}"

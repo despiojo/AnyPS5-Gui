@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AnyPS5Gui/AnyPS5Gui.csproj" />
+    <Project Path="src/AnyPS5Gui.Core/AnyPS5Gui.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AnyPS5Gui.Core.Tests/AnyPS5Gui.Core.Tests.csproj" />
+  </Folder>
+</Solution>

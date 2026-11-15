@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="AnyPS5Gui.Pages.GamesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:AnyPS5Gui.Controls"
+    xmlns:vm="using:AnyPS5Gui.ViewModels">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- The games -->
+        <Grid BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock x:Uid="Games_Title" Style="{StaticResource TitleTextBlockStyle}" Margin="24,20,12,12" />
+
+            <ListView x:Name="GameList" Grid.Row="1" Padding="8,0,8,0" SelectionChanged="OnGameSelected"
+                      ItemsSource="{x:Bind ViewModel.Games}"
+                      SelectedItem="{x:Bind ViewModel.Selected, Mode=OneWay}">
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:GameItemViewModel">
+                        <Grid ColumnSpacing="10" Padding="0,6,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="40" Height="40" CornerRadius="4"
+                                    Background="{ThemeResource ControlAltFillColorSecondaryBrush}">
+                                <Image Source="{x:Bind Icon}" Stretch="UniformToFill" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind Title, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{x:Bind Subtitle, Mode=OneWay}" Style="{StaticResource SecondaryTextStyle}"
+                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <TextBlock Grid.Row="1" x:Uid="Games_Empty" Margin="24,0,16,0" TextWrapping="Wrap"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}" />
+
+            <Button Grid.Row="2" x:Uid="Games_AddExisting" Margin="16,8,16,16" HorizontalAlignment="Stretch"
+                    Command="{x:Bind ViewModel.AddExistingCommand}" />
+        </Grid>
+
+        <!-- The selected game -->
+        <Grid Grid.Column="1" Visibility="{x:Bind ViewModel.HasSelection, Mode=OneWay}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="230" />
+            </Grid.RowDefinitions>
+
+            <ScrollViewer>
+                <StackPanel Padding="24,20,24,16" Spacing="12" MaxWidth="1100">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="96" Height="96" CornerRadius="8" VerticalAlignment="Top"
+                                Background="{ThemeResource ControlAltFillColorSecondaryBrush}">
+                            <Image Source="{x:Bind ViewModel.Selected.Icon, Mode=OneWay}" Stretch="UniformToFill" />
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="{x:Bind ViewModel.Selected.Title, Mode=OneWay}"
+                                       Style="{StaticResource SubtitleTextBlockStyle}" TextWrapping="Wrap" />
+                            <TextBlock Text="{x:Bind ViewModel.Selected.Subtitle, Mode=OneWay}"
+                                       Style="{StaticResource SecondaryTextStyle}" />
+                            <TextBlock Text="{x:Bind ViewModel.Selected.Directory, Mode=OneWay}"
+                                       Style="{StaticResource SecondaryTextStyle}" IsTextSelectionEnabled="True" />
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,10,0,0">
+                                <Button x:Uid="Games_Launch" Style="{StaticResource AccentButtonStyle}" MinWidth="110"
+                                        Command="{x:Bind ViewModel.Selected.LaunchCommand, Mode=OneWay}" />
+                                <Button x:Uid="Games_Stop" Command="{x:Bind ViewModel.Selected.StopCommand, Mode=OneWay}" />
+                                <Button x:Uid="Games_OpenFolder" Command="{x:Bind ViewModel.Selected.OpenFolderCommand, Mode=OneWay}" />
+                                <Button x:Uid="Games_Remove" Command="{x:Bind ViewModel.RemoveCommand}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+
+                    <Expander x:Uid="Games_Display" IsExpanded="True" HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch">
+                        <Grid ColumnSpacing="24" RowSpacing="14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <ToggleSwitch x:Uid="Games_Fullscreen" IsOn="{x:Bind ViewModel.Selected.Fullscreen, Mode=TwoWay}" />
+                            <NumberBox Grid.Column="1" x:Uid="Games_DisplayIndex" Minimum="0" Maximum="15"
+                                       SpinButtonPlacementMode="Inline" HorizontalAlignment="Stretch"
+                                       Value="{x:Bind ViewModel.Selected.DisplayIndex, Mode=TwoWay}" />
+
+                            <ToggleSwitch Grid.Row="1" x:Uid="Games_Fsr" IsOn="{x:Bind ViewModel.Selected.Fsr, Mode=TwoWay}" />
+                            <Slider Grid.Row="1" Grid.Column="1" x:Uid="Games_FsrSharpness" Minimum="0" Maximum="2"
+                                    StepFrequency="0.1" TickFrequency="0.5" TickPlacement="Outside"
+                                    IsEnabled="{x:Bind ViewModel.Selected.Fsr, Mode=OneWay}"
+                                    Value="{x:Bind ViewModel.Selected.FsrSharpness, Mode=TwoWay}" />
+
+                            <ComboBox Grid.Row="2" x:Uid="Games_PresentMode" HorizontalAlignment="Stretch"
+                                      SelectedIndex="{x:Bind ViewModel.Selected.PresentModeIndex, Mode=TwoWay}">
+                                <ComboBoxItem x:Uid="Games_PresentDefault" />
+                                <ComboBoxItem x:Uid="Games_PresentLatestReady" />
+                                <ComboBoxItem x:Uid="Games_PresentMailbox" />
+                                <ComboBoxItem x:Uid="Games_PresentImmediate" />
+                            </ComboBox>
+                            <NumberBox Grid.Row="2" Grid.Column="1" x:Uid="Games_FpsLimit" Minimum="0" Maximum="1000"
+                                       SpinButtonPlacementMode="Inline" SmallChange="5" HorizontalAlignment="Stretch"
+                                       Value="{x:Bind ViewModel.Selected.FpsLimit, Mode=TwoWay}" />
+
+                            <ComboBox Grid.Row="3" x:Uid="Games_OutputResolution" HorizontalAlignment="Stretch"
+                                      SelectedIndex="{x:Bind ViewModel.Selected.OutputResolutionIndex, Mode=TwoWay}">
+                                <ComboBoxItem x:Uid="Games_ResolutionDefault" />
+                                <ComboBoxItem Content="1920 × 1080 (1080p)" />
+                                <ComboBoxItem Content="3840 × 2160 (2160p)" />
+                            </ComboBox>
+                            <TextBox Grid.Row="3" Grid.Column="1" x:Uid="Games_Gpu"
+                                     Text="{x:Bind ViewModel.Selected.Gpu, Mode=TwoWay}" />
+                        </Grid>
+                    </Expander>
+
+                    <Expander x:Uid="Games_Audio" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                        <Grid ColumnSpacing="24" RowSpacing="14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Slider x:Uid="Games_Volume" Minimum="0" Maximum="100" StepFrequency="5"
+                                    Value="{x:Bind ViewModel.Selected.Volume, Mode=TwoWay}" />
+                            <ToggleSwitch Grid.Column="1" x:Uid="Games_MuteOnFocusLoss"
+                                          IsOn="{x:Bind ViewModel.Selected.MuteOnFocusLoss, Mode=TwoWay}" />
+
+                            <Slider Grid.Row="1" x:Uid="Games_Rumble" Minimum="0" Maximum="100" StepFrequency="5"
+                                    Value="{x:Bind ViewModel.Selected.Rumble, Mode=TwoWay}" />
+                            <ComboBox x:Name="LanguageBox" Grid.Row="1" Grid.Column="1" x:Uid="Games_Language"
+                                      HorizontalAlignment="Stretch"
+                                      SelectedIndex="{x:Bind ViewModel.Selected.LanguageIndex, Mode=TwoWay}" />
+                        </Grid>
+                    </Expander>
+
+                    <Expander x:Uid="Games_AdvancedExpander" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                        <StackPanel Spacing="12">
+                            <StackPanel>
+                                <CheckBox x:Uid="Games_HostReport" IsChecked="{x:Bind ViewModel.Selected.HostReport, Mode=TwoWay}" />
+                                <CheckBox x:Uid="Games_DisableShaderCache" IsChecked="{x:Bind ViewModel.Selected.DisableShaderCache, Mode=TwoWay}" />
+                                <CheckBox x:Uid="Games_Mimalloc" IsChecked="{x:Bind ViewModel.Selected.Mimalloc, Mode=TwoWay}" />
+                                <CheckBox x:Uid="Games_DisableDozen" IsChecked="{x:Bind ViewModel.Selected.DisableDozen, Mode=TwoWay}" />
+                            </StackPanel>
+                            <TextBox x:Uid="Games_CustomEnvironment" AcceptsReturn="True" MinHeight="84"
+                                     FontFamily="Cascadia Mono, Consolas" IsSpellCheckEnabled="False"
+                                     Text="{x:Bind ViewModel.Selected.CustomEnvironment, Mode=TwoWay}" />
+                            <TextBox x:Uid="Games_Arguments" IsSpellCheckEnabled="False"
+                                     Text="{x:Bind ViewModel.Selected.Arguments, Mode=TwoWay}" />
+                            <StackPanel Spacing="4">
+                                <TextBlock x:Uid="Games_EnvironmentPreview" />
+                                <TextBlock Text="{x:Bind ViewModel.Selected.EnvironmentPreview, Mode=OneWay}"
+                                           Style="{StaticResource MonoTextStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </ScrollViewer>
+
+            <controls:LogView Grid.Row="1" Log="{x:Bind ViewModel.Selected.Log, Mode=OneWay}" />
+        </Grid>
+    </Grid>
+</Page>

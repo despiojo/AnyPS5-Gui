@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AnyPS5Gui.Controls.LogView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:AnyPS5Gui">
+
+    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}"
+          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+          BorderThickness="0,1,0,0">
+        <ListView x:Name="List" SelectionMode="None" IsItemClickEnabled="False" Padding="0,6,0,6">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <!-- Follows new lines while the last one is in view, and stays put once the user scrolls up. -->
+                    <ItemsStackPanel ItemsUpdatingScrollMode="KeepLastItemInView" />
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+                    <Setter Property="MinHeight" Value="0" />
+                    <!-- Room on the right for the copy button. -->
+                    <Setter Property="Padding" Value="16,1,64,1" />
+                    <Setter Property="IsTabStop" Value="False" />
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="local:LogLine">
+                    <TextBlock Text="{x:Bind Text}" Style="{x:Bind local:LogStyles.For(Kind)}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <Button x:Name="CopyButton" x:Uid="Log_Copy" HorizontalAlignment="Right" VerticalAlignment="Top"
+                Margin="0,8,20,0" Padding="8,4" Click="OnCopy">
+            <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+        </Button>
+    </Grid>
+</UserControl>

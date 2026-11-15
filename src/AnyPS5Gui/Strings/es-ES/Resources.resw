@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Shared -->
+  <data name="Nav_Convert.Content" xml:space="preserve"><value>Convertir</value></data>
+  <data name="Nav_Games.Content" xml:space="preserve"><value>Juegos</value></data>
+  <data name="Common_Browse.Content" xml:space="preserve"><value>Examinar…</value></data>
+  <data name="Common_Cancel.Content" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Log_Copy.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Copiar el registro</value></data>
+  <data name="Log_Copy.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Copiar el registro</value></data>
+
+  <data name="Error_Title" xml:space="preserve"><value>Algo ha ido mal</value></data>
+  <data name="Error_Details" xml:space="preserve"><value>Los detalles se han guardado en {0}</value></data>
+  <data name="Error_Close" xml:space="preserve"><value>Cerrar</value></data>
+
+  <!-- Convert page -->
+  <data name="Convert_Title.Text" xml:space="preserve"><value>Convertir un juego</value></data>
+  <data name="Convert_Intro.Text" xml:space="preserve"><value>Convierte un juego de PS5 volcado en un programa de Windows con AnyPS5. El juego tiene que estar ya extraído y descifrado: aquí no se desempaqueta ni se descifra nada.</value></data>
+  <data name="Convert_ComponentsMissing.Title" xml:space="preserve"><value>AnyPS5 todavía no está descargado</value></data>
+  <data name="Convert_ComponentsMissing.Message" xml:space="preserve"><value>El relinker y las bibliotecas del sistema salen de las versiones publicadas de AnyPS5 en GitHub (unos 115 MB).</value></data>
+  <data name="Convert_Download.Content" xml:space="preserve"><value>Descargar</value></data>
+  <data name="Convert_GamePath.Header" xml:space="preserve"><value>Carpeta del juego</value></data>
+  <data name="Convert_GamePath.PlaceholderText" xml:space="preserve"><value>La carpeta que contiene eboot.bin. También puedes soltarla en esta página</value></data>
+  <data name="Convert_BrowseFolder.Content" xml:space="preserve"><value>Carpeta…</value></data>
+  <data name="Convert_BrowseFile.Content" xml:space="preserve"><value>Archivo…</value></data>
+  <data name="Convert_Output.Header" xml:space="preserve"><value>Carpeta de salida</value></data>
+  <data name="Convert_LinkFiles.Content" xml:space="preserve"><value>Enlazar los archivos del juego en vez de copiarlos</value></data>
+  <data name="Convert_LinkFilesHelp.Text" xml:space="preserve"><value>Es instantáneo y no ocupa más espacio, pero la salida tiene que estar en la misma unidad NTFS que el juego; si no, los archivos se copian. Un archivo enlazado es el mismo archivo del volcado con un segundo nombre: no lo modifiques.</value></data>
+  <data name="Convert_ToIntel.Content" xml:space="preserve"><value>Convertir para una CPU Intel</value></data>
+  <data name="Convert_ToIntelHelp.Text" xml:space="preserve"><value>Reescribe las instrucciones del juego que solo tiene AMD (--to-intel). Déjalo sin marcar en una CPU AMD.</value></data>
+  <data name="Convert_WindowsGui.Content" xml:space="preserve"><value>Sin ventana de consola</value></data>
+  <data name="Convert_WindowsGuiHelp.Text" xml:space="preserve"><value>Al arrancarlo fuera de esta aplicación, el juego se abre sin consola y escribe su salida en anyps5.log (--windows-gui).</value></data>
+  <data name="Convert_Advanced.Header" xml:space="preserve"><value>Opciones avanzadas</value></data>
+  <data name="Convert_UnusedFilter.Header" xml:space="preserve"><value>Importaciones sin usar</value></data>
+  <data name="Convert_UnusedFilter0.Content" xml:space="preserve"><value>Conservar todas las importaciones (por defecto)</value></data>
+  <data name="Convert_UnusedFilter1.Content" xml:space="preserve"><value>Filtrar las que no se usan y conservar la PLT (unused-filter=1)</value></data>
+  <data name="Convert_UnusedFilter2.Content" xml:space="preserve"><value>Análisis estricto y PLT compactada (unused-filter=2)</value></data>
+  <data name="Convert_FrameRedZone.Content" xml:space="preserve"><value>Proteger las funciones hoja de las excepciones de Windows (--frame-red-zone)</value></data>
+  <data name="Convert_WindowsDiagnostics.Content" xml:space="preserve"><value>Escribir el diagnóstico de dependencias de arranque (--windows-diagnostics)</value></data>
+  <data name="Convert_TraceImports.Content" xml:space="preserve"><value>Trazar las llamadas a bibliotecas del sistema (--trace-imports)</value></data>
+  <data name="Convert_Registry.Content" xml:space="preserve"><value>Escribir los archivos de registro (--registry)</value></data>
+  <data name="Convert_FunctionSymbolRoots.Content" xml:space="preserve"><value>Tratar los símbolos de función como puntos de entrada (--function-symbol-roots)</value></data>
+  <data name="Convert_FixedBase.Header" xml:space="preserve"><value>Dirección de carga fija (--windows-fixed-base)</value></data>
+  <data name="Convert_FixedBase.PlaceholderText" xml:space="preserve"><value>Por ejemplo 0x400000. Déjalo vacío salvo que el juego lo necesite</value></data>
+  <data name="Convert_SceModulePath.Header" xml:space="preserve"><value>Carpeta que contiene las de módulos (--sce-module-path)</value></data>
+  <data name="Convert_SceModulePath.PlaceholderText" xml:space="preserve"><value>Por defecto, la carpeta del ejecutable</value></data>
+  <data name="Convert_ModuleDirectories.Header" xml:space="preserve"><value>Otras carpetas de módulos, una por línea (--module-dir)</value></data>
+  <data name="Convert_ModuleDirectories.PlaceholderText" xml:space="preserve"><value>Por ejemplo Media/Plugins</value></data>
+  <data name="Convert_Executables.Header" xml:space="preserve"><value>Otros ejecutables, uno por línea (--executable)</value></data>
+  <data name="Convert_Executables.PlaceholderText" xml:space="preserve"><value>Por ejemplo picker/picker.bin</value></data>
+  <data name="Convert_PatchMode.Header" xml:space="preserve"><value>Parches del juego</value></data>
+  <data name="Convert_PatchAuto.Content" xml:space="preserve"><value>Usar relinker-patches.toml si la carpeta del juego lo trae</value></data>
+  <data name="Convert_PatchNone.Content" xml:space="preserve"><value>No aplicar parches (--no-patches)</value></data>
+  <data name="Convert_PatchFromFile.Content" xml:space="preserve"><value>Usar el archivo de parches de abajo (--patches)</value></data>
+  <data name="Convert_PatchFile.Header" xml:space="preserve"><value>Archivo de parches</value></data>
+  <data name="Convert_ExtraArguments.Header" xml:space="preserve"><value>Otros argumentos para el relinker</value></data>
+  <data name="Convert_ExtraArguments.PlaceholderText" xml:space="preserve"><value>Cualquier otra cosa, escrita como en una línea de comandos</value></data>
+  <data name="Convert_CommandExpander.Header" xml:space="preserve"><value>Comando</value></data>
+  <data name="Convert_ShowInGames.Content" xml:space="preserve"><value>Ver en Juegos</value></data>
+  <data name="Convert_ConvertButton.Content" xml:space="preserve"><value>Convertir</value></data>
+  <data name="Convert_DryRunButton.Content" xml:space="preserve"><value>Simular</value></data>
+  <data name="Convert_GameDetails" xml:space="preserve"><value>Ejecutable: {0}
+Carpetas de módulos: {1}</value></data>
+  <data name="Convert_PatchFileFound" xml:space="preserve"><value>Esta carpeta trae un relinker-patches.toml. Se aplica salvo que elijas otra cosa en Opciones avanzadas.</value></data>
+  <data name="Issue_NoExecutable" xml:space="preserve"><value>Aquí no hay ningún eboot.bin. Elige la carpeta de un juego extraído, o su ejecutable con «Archivo…».</value></data>
+  <data name="Issue_WrappedExecutable" xml:space="preserve"><value>El ejecutable sigue siendo un contenedor SELF. El relinker necesita un ELF limpio: desenvuélvelo antes, por ejemplo con tools/unwrap_self.py del repositorio de AnyPS5.</value></data>
+  <data name="Issue_NotAnElf" xml:space="preserve"><value>El ejecutable no es un archivo ELF. Puede que siga cifrado.</value></data>
+  <data name="Issue_NoModuleDirectory" xml:space="preserve"><value>No hay carpeta sce_module, sce_modules ni prx junto al ejecutable. Sin ninguna el relinker se detiene, salvo que añadas una carpeta de módulos en Opciones avanzadas («.» es la propia carpeta del juego).</value></data>
+  <data name="Issue_BothModuleDirectories" xml:space="preserve"><value>La carpeta tiene sce_module y sce_modules a la vez. El relinker solo acepta una de las dos.</value></data>
+  <data name="Issue_WrappedModules" xml:space="preserve"><value>Módulos que siguen siendo contenedores SELF: {0}. El relinker los salta; desenvuélvelos si el juego los necesita.</value></data>
+  <data name="Convert_Failed" xml:space="preserve"><value>El relinker ha fallado (código de salida {0}). El motivo está en el registro.</value></data>
+  <data name="Convert_DryRunDone" xml:space="preserve"><value>Simulación terminada: no se ha escrito nada.</value></data>
+  <data name="Convert_LibrariesPlaced" xml:space="preserve"><value>Bibliotecas del sistema: {0}</value></data>
+  <data name="Convert_GameFilesPlaced" xml:space="preserve"><value>Archivos del juego: {0}</value></data>
+  <data name="Convert_MirrorSummary" xml:space="preserve"><value>{0} enlazados, {1} copiados, {2} ya estaban</value></data>
+  <data name="Convert_NoLibraries" xml:space="preserve"><value>No se han colocado bibliotecas del sistema. Copia las bibliotecas de AnyPS5 para Windows en la carpeta libs antes de arrancar el juego.</value></data>
+  <data name="Convert_Done" xml:space="preserve"><value>Convertido: {0}</value></data>
+  <data name="Convert_Cancelled" xml:space="preserve"><value>Cancelado. La carpeta de salida puede contener una conversión a medias.</value></data>
+  <data name="Problem_NoExecutable" xml:space="preserve"><value>No hay ningún ejecutable que convertir.</value></data>
+  <data name="Problem_RelinkerMissing" xml:space="preserve"><value>No se encuentra el relinker. Descarga AnyPS5, o revisa la ruta de tu propia compilación en Configuración.</value></data>
+  <data name="Problem_OutputInsideGame" xml:space="preserve"><value>La carpeta de salida no puede ser la del juego ni estar dentro de ella.</value></data>
+  <data name="Problem_GameInsideOutput" xml:space="preserve"><value>La carpeta de salida no puede contener la del juego.</value></data>
+  <data name="Stage_Relinking" xml:space="preserve"><value>Ejecutando el relinker…</value></data>
+  <data name="Stage_Libraries" xml:space="preserve"><value>Colocando las bibliotecas del sistema…</value></data>
+  <data name="Stage_GameFiles" xml:space="preserve"><value>Colocando los archivos del juego…</value></data>
+
+  <!-- Games page -->
+  <data name="Games_Title.Text" xml:space="preserve"><value>Juegos</value></data>
+  <data name="Games_Empty.Text" xml:space="preserve"><value>Todavía no hay juegos. Convierte uno, o añade uno que ya hubieras convertido.</value></data>
+  <data name="Games_AddExisting.Content" xml:space="preserve"><value>Añadir un juego convertido…</value></data>
+  <data name="Games_Launch.Content" xml:space="preserve"><value>Jugar</value></data>
+  <data name="Games_Stop.Content" xml:space="preserve"><value>Detener</value></data>
+  <data name="Games_OpenFolder.Content" xml:space="preserve"><value>Abrir carpeta</value></data>
+  <data name="Games_Remove.Content" xml:space="preserve"><value>Quitar de la lista</value></data>
+  <data name="Games_Display.Header" xml:space="preserve"><value>Pantalla</value></data>
+  <data name="Games_Fullscreen.Header" xml:space="preserve"><value>Arrancar a pantalla completa</value></data>
+  <data name="Games_Fullscreen.OnContent" xml:space="preserve"><value>Sí</value></data>
+  <data name="Games_Fullscreen.OffContent" xml:space="preserve"><value>No</value></data>
+  <data name="Games_DisplayIndex.Header" xml:space="preserve"><value>Número de pantalla (la primera es la 0)</value></data>
+  <data name="Games_DisplayIndex.PlaceholderText" xml:space="preserve"><value>La primera pantalla</value></data>
+  <data name="Games_Fsr.Header" xml:space="preserve"><value>Reescalado FSR 1.0</value></data>
+  <data name="Games_Fsr.OnContent" xml:space="preserve"><value>Sí</value></data>
+  <data name="Games_Fsr.OffContent" xml:space="preserve"><value>No</value></data>
+  <data name="Games_FsrSharpness.Header" xml:space="preserve"><value>Nitidez de FSR (0 es la máxima)</value></data>
+  <data name="Games_PresentMode.Header" xml:space="preserve"><value>Presentación</value></data>
+  <data name="Games_PresentDefault.Content" xml:space="preserve"><value>Sincronización vertical (por defecto)</value></data>
+  <data name="Games_PresentLatestReady.Content" xml:space="preserve"><value>El último fotograma listo, sin cortes</value></data>
+  <data name="Games_PresentMailbox.Content" xml:space="preserve"><value>Mailbox, sin cortes</value></data>
+  <data name="Games_PresentImmediate.Content" xml:space="preserve"><value>Inmediata, puede haber cortes</value></data>
+  <data name="Games_FpsLimit.Header" xml:space="preserve"><value>Límite de fotogramas por segundo (0, sin límite)</value></data>
+  <data name="Games_OutputResolution.Header" xml:space="preserve"><value>Resolución que se le dice al juego</value></data>
+  <data name="Games_ResolutionDefault.Content" xml:space="preserve"><value>La de la pantalla</value></data>
+  <data name="Games_Gpu.Header" xml:space="preserve"><value>GPU</value></data>
+  <data name="Games_Gpu.PlaceholderText" xml:space="preserve"><value>Parte de su nombre, como RTX. Vacío: se elige sola</value></data>
+  <data name="Games_Audio.Header" xml:space="preserve"><value>Sonido, mando e idioma</value></data>
+  <data name="Games_Volume.Header" xml:space="preserve"><value>Volumen</value></data>
+  <data name="Games_MuteOnFocusLoss.Header" xml:space="preserve"><value>Silenciar en segundo plano</value></data>
+  <data name="Games_MuteOnFocusLoss.OnContent" xml:space="preserve"><value>Sí</value></data>
+  <data name="Games_MuteOnFocusLoss.OffContent" xml:space="preserve"><value>No</value></data>
+  <data name="Games_Rumble.Header" xml:space="preserve"><value>Fuerza de la vibración</value></data>
+  <data name="Games_Language.Header" xml:space="preserve"><value>Idioma de la consola</value></data>
+  <data name="Games_LanguageDefault" xml:space="preserve"><value>Por defecto (inglés de Estados Unidos)</value></data>
+  <data name="Games_LanguageAuto" xml:space="preserve"><value>El de Windows</value></data>
+  <data name="Games_AdvancedExpander.Header" xml:space="preserve"><value>Avanzado</value></data>
+  <data name="Games_HostReport.Content" xml:space="preserve"><value>Imprimir un informe del equipo, para informes de errores (ANYPS5_HOST_REPORT)</value></data>
+  <data name="Games_DisableShaderCache.Content" xml:space="preserve"><value>Desactivar la caché de shaders (ANYPS5_NO_SHADER_CACHE)</value></data>
+  <data name="Games_Mimalloc.Content" xml:space="preserve"><value>Usar el asignador de memoria mimalloc (APS5_MIMALLOC)</value></data>
+  <data name="Games_DisableDozen.Content" xml:space="preserve"><value>Ocultar el controlador Vulkan «Dozen» sobre D3D12, que en algunos equipos falla al arrancar</value></data>
+  <data name="Games_CustomEnvironment.Header" xml:space="preserve"><value>Otras variables de entorno, una NOMBRE=VALOR por línea</value></data>
+  <data name="Games_CustomEnvironment.PlaceholderText" xml:space="preserve"><value>APS5_PROFILE_DRAW=1</value></data>
+  <data name="Games_Arguments.Header" xml:space="preserve"><value>Argumentos para el juego</value></data>
+  <data name="Games_EnvironmentPreview.Text" xml:space="preserve"><value>El juego arranca con:</value></data>
+  <data name="Games_NoEnvironment" xml:space="preserve"><value>(nada: los valores por defecto de AnyPS5)</value></data>
+  <data name="Games_ExecutableMissing" xml:space="preserve"><value>{0} ya no existe. Vuelve a convertir el juego o quítalo de la lista.</value></data>
+  <data name="Games_Exited" xml:space="preserve"><value>El juego ha terminado con el código de salida {0} ({1}).</value></data>
+  <data name="Games_Stopped" xml:space="preserve"><value>Detenido.</value></data>
+
+  <!-- Settings page -->
+  <data name="Settings_Title.Text" xml:space="preserve"><value>Configuración</value></data>
+  <data name="Settings_ComponentsHeader.Text" xml:space="preserve"><value>AnyPS5</value></data>
+  <data name="Settings_ComponentsHelp.Text" xml:space="preserve"><value>El relinker y las bibliotecas del sistema para Windows se descargan de las versiones publicadas de AnyPS5 en GitHub. Al volver a convertir un juego, sus bibliotecas pasan a ser las de la versión en uso.</value></data>
+  <data name="Settings_ActiveVersion.Header" xml:space="preserve"><value>Versión en uso</value></data>
+  <data name="Settings_RemoveVersion.Content" xml:space="preserve"><value>Borrar esta versión</value></data>
+  <data name="Settings_Release.Header" xml:space="preserve"><value>Versión que descargar</value></data>
+  <data name="Settings_Release.PlaceholderText" xml:space="preserve"><value>La más reciente</value></data>
+  <data name="Settings_Check.Content" xml:space="preserve"><value>Buscar versiones</value></data>
+  <data name="Settings_Install.Content" xml:space="preserve"><value>Descargar</value></data>
+  <data name="Settings_CustomHeader.Text" xml:space="preserve"><value>Tu propia compilación</value></data>
+  <data name="Settings_CustomHelp.Text" xml:space="preserve"><value>Si compilas AnyPS5 por tu cuenta, indica tu relinker y la carpeta con sus bibliotecas para Windows. Se usan en lugar de los descargados.</value></data>
+  <data name="Settings_CustomRelinker.Header" xml:space="preserve"><value>Relinker</value></data>
+  <data name="Settings_CustomLibs.Header" xml:space="preserve"><value>Carpeta de bibliotecas</value></data>
+  <data name="Settings_FoldersHeader.Text" xml:space="preserve"><value>Juegos convertidos</value></data>
+  <data name="Settings_OutputRoot.Header" xml:space="preserve"><value>Carpeta para los juegos convertidos</value></data>
+  <data name="Settings_OutputRoot.PlaceholderText" xml:space="preserve"><value>Vacío: junto a la carpeta de cada juego</value></data>
+  <data name="Settings_OutputRootHelp.Text" xml:space="preserve"><value>Cada juego tiene aquí su propia subcarpeta. Si está en la misma unidad que tus volcados, los archivos del juego se pueden enlazar en vez de copiar.</value></data>
+  <data name="Settings_AppearanceHeader.Text" xml:space="preserve"><value>Apariencia</value></data>
+  <data name="Settings_Language.Header" xml:space="preserve"><value>Idioma</value></data>
+  <data name="Settings_LanguageSystem.Content" xml:space="preserve"><value>El de Windows</value></data>
+  <data name="Settings_Theme.Header" xml:space="preserve"><value>Tema</value></data>
+  <data name="Settings_ThemeSystem.Content" xml:space="preserve"><value>El de Windows</value></data>
+  <data name="Settings_ThemeLight.Content" xml:space="preserve"><value>Claro</value></data>
+  <data name="Settings_ThemeDark.Content" xml:space="preserve"><value>Oscuro</value></data>
+  <data name="Settings_RestartNeeded.Message" xml:space="preserve"><value>El idioma cambia la próxima vez que se abra la aplicación.</value></data>
+  <data name="Settings_HostHeader.Text" xml:space="preserve"><value>Este equipo</value></data>
+  <data name="Settings_HostOk" xml:space="preserve"><value>La CPU tiene todas las extensiones que necesitan los juegos y hay un controlador Vulkan instalado.</value></data>
+  <data name="Settings_HostCpuMissing" xml:space="preserve"><value>A la CPU le falta alguna extensión que los juegos de PS5 usan sin comprobar. Los juegos convertidos se detendrán al arrancar.</value></data>
+  <data name="Settings_HostVulkanMissing" xml:space="preserve"><value>No se ha encontrado ningún controlador Vulkan. Los juegos necesitan Vulkan 1.1 para los gráficos: actualiza el controlador de la GPU.</value></data>
+  <data name="Settings_AboutText.Text" xml:space="preserve"><value>Una interfaz para AnyPS5, que porta ejecutables de PS5 a Windows sin emulación. El trabajo lo hace AnyPS5; esta aplicación solo lo ejecuta y pone los archivos en su sitio.</value></data>
+  <data name="Settings_LinkProject.Content" xml:space="preserve"><value>Proyecto AnyPS5</value></data>
+  <data name="Settings_LinkUsage.Content" xml:space="preserve"><value>Uso</value></data>
+  <data name="Settings_LinkInput.Content" xml:space="preserve"><value>Asignación de teclado y mando</value></data>
+  <data name="Settings_LinkCompatibility.Content" xml:space="preserve"><value>Compatibilidad de juegos</value></data>
+  <data name="Settings_Disclaimer.Text" xml:space="preserve"><value>Un juego convertido es un programa cualquiera: se ejecuta con los permisos de tu cuenta y sin el aislamiento de la consola. Convierte y ejecuta solo juegos que sean tuyos y en los que confíes. Esta aplicación no está afiliada a AnyPS5 ni a Sony Interactive Entertainment.</value></data>
+  <data name="Settings_DataFolder.Content" xml:space="preserve"><value>Abrir la carpeta de datos</value></data>
+  <data name="Components_NotInstalled" xml:space="preserve"><value>AnyPS5 todavía no está descargado.</value></data>
+  <data name="Components_Custom" xml:space="preserve"><value>Se usa tu propio relinker.</value></data>
+  <data name="Components_Using" xml:space="preserve"><value>Se usa AnyPS5 {0}.</value></data>
+  <data name="Components_NoRelease" xml:space="preserve"><value>No se ha encontrado ninguna versión con relinker y bibliotecas para Windows.</value></data>
+  <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} está listo.</value></data>
+  <data name="Components_Checking" xml:space="preserve"><value>Preguntando a GitHub por las versiones de AnyPS5…</value></data>
+  <data name="Components_UpToDate" xml:space="preserve"><value>{0} es la versión más reciente y ya está descargada.</value></data>
+  <data name="Components_Available" xml:space="preserve"><value>{0} está disponible.</value></data>
+  <data name="Components_Cancelled" xml:space="preserve"><value>Cancelado.</value></data>
+  <data name="Install_Relinker" xml:space="preserve"><value>Descargando el relinker… {0} / {1} MB</value></data>
+  <data name="Install_Libraries" xml:space="preserve"><value>Descargando las bibliotecas del sistema… {0} / {1} MB</value></data>
+  <data name="Install_Extracting" xml:space="preserve"><value>Desempaquetando las bibliotecas del sistema… {0} / {1}</value></data>
+</root>
