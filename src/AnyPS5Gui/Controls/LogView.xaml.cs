@@ -14,9 +14,16 @@ public sealed partial class LogView : UserControl
 {
     public static readonly DependencyProperty LogProperty = DependencyProperty.Register(
         nameof(Log), typeof(LogBuffer), typeof(LogView),
-        new PropertyMetadata(null, (sender, e) => ((LogView)sender).OnLogChanged(e.OldValue as LogBuffer, e.NewValue as LogBuffer)));
+        new PropertyMetadata(null, (sender, _) => ((LogView)sender).Follow()));
 
-    public LogView() => InitializeComponent();
+    private LogBuffer? _followed;
+
+    public LogView()
+    {
+        InitializeComponent();
+        Loaded += (_, _) => Follow();
+        Unloaded += (_, _) => Follow();
+    }
 
     public LogBuffer? Log
     {
@@ -24,9 +31,19 @@ public sealed partial class LogView : UserControl
         set => SetValue(LogProperty, value);
     }
 
-    private void OnLogChanged(LogBuffer? old, LogBuffer? log)
+    /// <summary>
+    /// Listens to the buffer in <see cref="Log"/> while the control is on a page, and lets go of it when
+    /// it is not. The buffers last as long as the app and every navigation makes a new page: a control
+    /// that stayed subscribed would be kept by its buffer, page and all, and go on handling every line.
+    /// </summary>
+    private void Follow()
     {
-        if (old is not null) old.FilePathChanged -= OnFilePathChanged;
+        // Loaded and Unloaded can arrive out of order; IsLoaded says where the control is now.
+        var log = IsLoaded ? Log : null;
+        if (ReferenceEquals(log, _followed)) return;
+
+        if (_followed is not null) _followed.FilePathChanged -= OnFilePathChanged;
+        _followed = log;
         if (log is not null) log.FilePathChanged += OnFilePathChanged;
         List.ItemsSource = log?.Lines;
         OpenFileButton.IsEnabled = log?.FilePath is not null;
