@@ -207,6 +207,33 @@ public class ComponentTests
     }
 
     [Fact]
+    public void Fork_numbered_versions_are_ordered_numerically_for_fallback()
+    {
+        using var temp = new TempDirectory();
+        foreach (var version in new[]
+        {
+            "v0.1.9@someone~AnyPS5", "v0.1.10@someone~AnyPS5", "v0.1.2@another~AnyPS5",
+            "vmain@someone~AnyPS5",
+        })
+        {
+            temp.Write(Path.Combine("components", version, "relinker.exe"));
+            temp.Write(Path.Combine("components", version, "libs", "libc.prx"));
+        }
+        var store = new ComponentStore(temp.Combine("components"));
+
+        Assert.Equal(
+            ["v0.1.10@someone~AnyPS5", "v0.1.9@someone~AnyPS5", "v0.1.2@another~AnyPS5", "vmain@someone~AnyPS5"],
+            store.InstalledVersions());
+        Assert.Equal("v0.1.10@someone~AnyPS5", store.Resolve(new AppSettings { ActiveVersion = "missing" }).Version);
+        Assert.Equal("v0.1.9@someone~AnyPS5",
+            store.Resolve(new AppSettings { ActiveVersion = "v0.1.9@someone~AnyPS5" }).Version);
+
+        temp.Write(Path.Combine("components", "v0.1.1", "relinker.exe"));
+        temp.Write(Path.Combine("components", "v0.1.1", "libs", "libc.prx"));
+        Assert.Equal("v0.1.1", store.Resolve(new AppSettings { ActiveVersion = "missing" }).Version);
+    }
+
+    [Fact]
     public void Extraction_takes_the_libs_folder_and_refuses_paths_that_escape_it()
     {
         using var temp = new TempDirectory();

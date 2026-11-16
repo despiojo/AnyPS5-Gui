@@ -203,9 +203,8 @@ public sealed partial class ComponentStore(string root)
     private static partial Regex VersionPattern();
 
     /// <summary>
-    /// Orders v0.1.10 after v0.1.9, which plain text order gets wrong. A name that is not a version number
-    /// alone, such as a build from another source, comes after every numbered one: it is never taken for
-    /// the newest, whatever number its tag carries.
+    /// Official builds come before other sources, and numbered tags before other tags from the same
+    /// source. Numbered tags are compared as versions, so v0.1.10 comes after v0.1.9.
     /// </summary>
     private sealed class VersionOrder : IComparer<string>
     {
@@ -213,11 +212,19 @@ public sealed partial class ComponentStore(string root)
 
         public int Compare(string? x, string? y)
         {
-            var a = Parse(x);
-            var b = Parse(y);
-            if (a is not null && b is not null) return a.CompareTo(b);
-            if (a is null && b is null) return string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
-            return a is null ? -1 : 1;
+            var aFork = x?.Contains('@') == true;
+            var bFork = y?.Contains('@') == true;
+            if (aFork != bFork) return aFork ? -1 : 1;
+
+            var a = Parse(x?.Split('@')[0]);
+            var b = Parse(y?.Split('@')[0]);
+            if (a is not null && b is not null)
+            {
+                var result = a.CompareTo(b);
+                if (result != 0) return result;
+            }
+            else if (a is not null || b is not null) return a is null ? -1 : 1;
+            return string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
         }
 
         private static Version? Parse(string? tag) =>
