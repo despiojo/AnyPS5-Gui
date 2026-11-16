@@ -10,4 +10,5 @@ public sealed class AppPaths(string root)
     public string SettingsFile => Path.Combine(Root, "settings.json");
     public string LibraryFile => Path.Combine(Root, "games.json");
     public string ComponentsDirectory => Path.Combine(Root, "components");
+    public string LogsDirectory => Path.Combine(Root, "logs");
 }

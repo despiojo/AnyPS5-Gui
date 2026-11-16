@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace AnyPS5Gui.Core.Components;
 
@@ -7,15 +8,29 @@ public sealed record ReleaseAsset(string Name, string Url, long Size, string? Sh
 /// <summary>An AnyPS5 release and the two files of it the app needs on Windows.</summary>
 public sealed record ReleaseInfo(string Tag, DateTimeOffset? PublishedAt, ReleaseAsset? Relinker, ReleaseAsset? Libraries)
 {
+    /// <summary>The GitHub repository the release is from: AnyPS5's own, unless the user added another source.</summary>
+    public string Repository { get; init; } = ReleaseClient.Repository;
+
+    public bool IsOfficial => Repository.Equals(ReleaseClient.Repository, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The name the release is downloaded under and chosen by afterwards.</summary>
+    public string VersionName => ComponentStore.VersionName(Tag, Repository);
+
+    /// <summary>What the list of versions shows: a build from elsewhere carries the name of where it is from.</summary>
+    public string Label => ComponentStore.VersionLabel(VersionName);
+
     public bool IsComplete => Relinker is not null && Libraries is not null;
     public long DownloadSize => (Relinker?.Size ?? 0) + (Libraries?.Size ?? 0);
 }
 
-/// <summary>Reads the release list of the AnyPS5 repository from the public GitHub API.</summary>
-public sealed class ReleaseClient(HttpClient http)
+/// <summary>Reads the release list of a GitHub repository, AnyPS5's own by default, from the public GitHub API.</summary>
+public sealed partial class ReleaseClient(HttpClient http)
 {
     public const string Repository = "boykopovar/AnyPS5";
-    private const string ReleasesUrl = $"https://api.github.com/repos/{Repository}/releases?per_page=15";
+
+    /// <summary>An <c>owner/name</c> that can go into a GitHub URL as it is.</summary>
+    public static bool IsValidRepository(string? repository) =>
+        repository is not null && RepositoryPattern().IsMatch(repository) && !repository.Contains("..");
 
     /// <summary>GitHub rejects requests without a user agent. The name identifies the app, not the user.</summary>
     public static HttpClient CreateHttpClient()
@@ -26,16 +41,33 @@ public sealed class ReleaseClient(HttpClient http)
         return http;
     }
 
-    /// <summary>Newest first, drafts and prereleases left out.</summary>
-    public async Task<IReadOnlyList<ReleaseInfo>> GetReleasesAsync(CancellationToken cancellationToken = default)
+    /// <summary>How long GitHub is given to answer with a release list.</summary>
+    public TimeSpan ResponseTimeout { get; init; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Newest first, drafts and prereleases left out. An answer that does not arrive in time is a failed
+    /// request, an <see cref="HttpRequestException"/>: only the caller's own token cancels.
+    /// </summary>
+    public async Task<IReadOnlyList<ReleaseInfo>> GetReleasesAsync(string repository = Repository,
+        CancellationToken cancellationToken = default)
     {
+        if (!IsValidRepository(repository)) throw new ArgumentException($"'{repository}' is not a GitHub repository name.", nameof(repository));
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(30));
-        var json = await http.GetStringAsync(ReleasesUrl, timeout.Token).ConfigureAwait(false);
-        return Parse(json);
+        timeout.CancelAfter(ResponseTimeout);
+        string json;
+        try
+        {
+            json = await http.GetStringAsync($"https://api.github.com/repos/{repository}/releases?per_page=15", timeout.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException e) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new HttpRequestException($"GitHub did not answer within {ResponseTimeout.TotalSeconds:0.#} seconds.", e);
+        }
+        return Parse(json, repository);
     }
 
-    public static IReadOnlyList<ReleaseInfo> Parse(string json)
+    public static IReadOnlyList<ReleaseInfo> Parse(string json, string repository = Repository)
     {
         using var document = JsonDocument.Parse(json);
         var releases = new List<ReleaseInfo>();
@@ -58,7 +90,7 @@ public sealed class ReleaseClient(HttpClient http)
             DateTimeOffset? published = release.TryGetProperty("published_at", out var date) &&
                                         date.ValueKind == JsonValueKind.String &&
                                         date.TryGetDateTimeOffset(out var parsed) ? parsed : null;
-            releases.Add(new ReleaseInfo(tag, published, relinker, libraries));
+            releases.Add(new ReleaseInfo(tag, published, relinker, libraries) { Repository = repository });
         }
         return releases;
     }
@@ -83,4 +115,7 @@ public sealed class ReleaseClient(HttpClient http)
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
+
+    [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+$")]
+    private static partial Regex RepositoryPattern();
 }

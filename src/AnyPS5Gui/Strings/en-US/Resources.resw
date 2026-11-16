@@ -12,6 +12,8 @@
   <data name="Common_Cancel.Content" xml:space="preserve"><value>Cancel</value></data>
   <data name="Log_Copy.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Copy the log</value></data>
   <data name="Log_Copy.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Copy the log</value></data>
+  <data name="Log_OpenFile.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Open the log file: the whole run, as text</value></data>
+  <data name="Log_OpenFile.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Open the log file</value></data>
 
   <data name="Error_Title" xml:space="preserve"><value>Something went wrong</value></data>
   <data name="Error_Details" xml:space="preserve"><value>The details were saved to {0}</value></data>
@@ -149,6 +151,10 @@ Module folders: {1}</value></data>
   <data name="Settings_Release.PlaceholderText" xml:space="preserve"><value>The newest</value></data>
   <data name="Settings_Check.Content" xml:space="preserve"><value>Check for versions</value></data>
   <data name="Settings_Install.Content" xml:space="preserve"><value>Download</value></data>
+  <data name="Settings_SourceHeader.Text" xml:space="preserve"><value>Builds from another repository</value></data>
+  <data name="Settings_SourceHelp.Text" xml:space="preserve"><value>The releases of another GitHub repository are listed with AnyPS5's own, with its name beside them: a fork that publishes builds with changes AnyPS5 has not released yet, for example. AnyPS5 does not review or support them; add only a repository you trust.</value></data>
+  <data name="Settings_ExtraSource.Header" xml:space="preserve"><value>GitHub repository (owner/name)</value></data>
+  <data name="Settings_ExtraSource.PlaceholderText" xml:space="preserve"><value>Empty: only AnyPS5's own releases</value></data>
   <data name="Settings_CustomHeader.Text" xml:space="preserve"><value>Your own build</value></data>
   <data name="Settings_CustomHelp.Text" xml:space="preserve"><value>If you build AnyPS5 yourself, point to your relinker and to the folder with its Windows libraries. They are used instead of the downloaded ones.</value></data>
   <data name="Settings_CustomRelinker.Header" xml:space="preserve"><value>Relinker</value></data>
@@ -157,6 +163,10 @@ Module folders: {1}</value></data>
   <data name="Settings_OutputRoot.Header" xml:space="preserve"><value>Folder for converted games</value></data>
   <data name="Settings_OutputRoot.PlaceholderText" xml:space="preserve"><value>Empty: next to each game's own folder</value></data>
   <data name="Settings_OutputRootHelp.Text" xml:space="preserve"><value>Each game gets its own subfolder here. On the same drive as your dumps, game files can be linked instead of copied.</value></data>
+  <data name="Settings_LogsHeader.Text" xml:space="preserve"><value>Logs</value></data>
+  <data name="Settings_LogsHelp.Text" xml:space="preserve"><value>Every conversion, dry run and game run writes all of its output to a text file, which can be read while it is running. Starting a new one deletes the oldest files.</value></data>
+  <data name="Settings_LogsKeep.Header" xml:space="preserve"><value>Log files to keep (0 writes none)</value></data>
+  <data name="Settings_LogsFolder.Content" xml:space="preserve"><value>Open logs folder</value></data>
   <data name="Settings_AppearanceHeader.Text" xml:space="preserve"><value>Appearance</value></data>
   <data name="Settings_Language.Header" xml:space="preserve"><value>Language</value></data>
   <data name="Settings_LanguageSystem.Content" xml:space="preserve"><value>Same as Windows</value></data>
@@ -180,6 +190,8 @@ Module folders: {1}</value></data>
   <data name="Components_Custom" xml:space="preserve"><value>Using your own relinker.</value></data>
   <data name="Components_Using" xml:space="preserve"><value>Using AnyPS5 {0}.</value></data>
   <data name="Components_NoRelease" xml:space="preserve"><value>No release with a Windows relinker and libraries was found.</value></data>
+  <data name="Components_BadSource" xml:space="preserve"><value>“{0}” is not a GitHub repository: write it as owner/name.</value></data>
+  <data name="Components_SourceFailed" xml:space="preserve"><value>The releases of {0} could not be read: {1}</value></data>
   <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} is ready.</value></data>
   <data name="Components_Checking" xml:space="preserve"><value>Asking GitHub for the AnyPS5 releases…</value></data>
   <data name="Components_UpToDate" xml:space="preserve"><value>{0} is the newest version and is already downloaded.</value></data>

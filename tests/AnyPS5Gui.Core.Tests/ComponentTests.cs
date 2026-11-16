@@ -43,6 +43,122 @@ public class ComponentTests
         Assert.False(releases[1].IsComplete);
     }
 
+    [Fact]
+    public void Releases_of_another_repository_carry_its_name()
+    {
+        var official = ReleaseClient.Parse(Releases)[0];
+        Assert.True(official.IsOfficial);
+        Assert.Equal("v0.1.5", official.Label);
+
+        var other = ReleaseClient.Parse(Releases, "someone/AnyPS5")[0];
+        Assert.False(other.IsOfficial);
+        Assert.Equal("someone/AnyPS5", other.Repository);
+        Assert.Equal("v0.1.5  ·  someone/AnyPS5", other.Label);
+
+        // What each is downloaded as: the label of a version can be told from its name alone.
+        Assert.Equal("v0.1.5", official.VersionName);
+        Assert.Equal("v0.1.5@someone~AnyPS5", other.VersionName);
+        Assert.Equal(official.Label, ComponentStore.VersionLabel(official.VersionName));
+        Assert.Equal(other.Label, ComponentStore.VersionLabel(other.VersionName));
+    }
+
+    [Theory]
+    [InlineData("v0.1.5", true)]
+    [InlineData("v0.1.5@some-one~Any.PS5_fork", true)]
+    [InlineData("v0.1.5@someone", false)]
+    [InlineData("v0.1.5@a~b~c", false)]
+    [InlineData("v0.1.5@a/b", false)]
+    [InlineData(@"v0.1.5@a~b\c", false)]
+    [InlineData("v0.1.5@a~..", false)]
+    [InlineData("@a~b", false)]
+    [InlineData(".staging-v0.1.5", false)]
+    public void Version_names_must_be_safe_folder_names(string version, bool expected)
+    {
+        Assert.Equal(expected, ComponentStore.IsValidVersion(version));
+    }
+
+    [Fact]
+    public async Task The_same_tag_from_two_repositories_is_two_versions()
+    {
+        using var temp = new TempDirectory();
+        var archive = Zip(("libs/libc.prx", "c"));
+        using var http = new HttpClient(new FakeDownloads(new()
+        {
+            ["https://example.test/official.exe"] = "official"u8.ToArray(),
+            ["https://example.test/fork.exe"] = "fork"u8.ToArray(),
+            ["https://example.test/libs.zip"] = archive,
+        }));
+        var store = new ComponentStore(temp.Combine("components"));
+        var official = new ReleaseInfo("v0.1.5", null,
+            new ReleaseAsset("relinker-v0.1.5.exe", "https://example.test/official.exe", 8, null),
+            new ReleaseAsset("prx-windows-v0.1.5.zip", "https://example.test/libs.zip", archive.Length, null));
+        var fork = official with
+        {
+            Repository = "someone/AnyPS5",
+            Relinker = official.Relinker! with { Url = "https://example.test/fork.exe" },
+        };
+
+        await store.InstallAsync(official, http, null, TestContext.Current.CancellationToken);
+        Assert.False(store.IsInstalled(fork.VersionName));
+        await store.InstallAsync(fork, http, null, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["v0.1.5", "v0.1.5@someone~AnyPS5"], store.InstalledVersions());
+        Assert.Equal("official", File.ReadAllText(store.RelinkerPath(official.VersionName)));
+        Assert.Equal("fork", File.ReadAllText(store.RelinkerPath(fork.VersionName)));
+        Assert.Equal("v0.1.5", store.Resolve(new AppSettings()).Version);
+        Assert.Equal(fork.VersionName, store.Resolve(new AppSettings { ActiveVersion = fork.VersionName }).Version);
+
+        store.Remove(fork.VersionName);
+        Assert.Equal(["v0.1.5"], store.InstalledVersions());
+        Assert.Equal("official", File.ReadAllText(store.RelinkerPath(official.VersionName)));
+    }
+
+    [Theory]
+    [InlineData("boykopovar/AnyPS5", true)]
+    [InlineData("some-one/Any.PS5_fork", true)]
+    [InlineData("AnyPS5", false)]
+    [InlineData("a/b/c", false)]
+    [InlineData("a/..", false)]
+    [InlineData("a b/c", false)]
+    [InlineData("a/b?per_page=1", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void A_release_source_is_an_owner_and_a_name(string? repository, bool expected)
+    {
+        Assert.Equal(expected, ReleaseClient.IsValidRepository(repository));
+    }
+
+    [Fact]
+    public async Task A_release_list_that_never_arrives_is_a_failed_request_and_not_a_cancellation()
+    {
+        using var http = new HttpClient(new NoAnswer());
+        var client = new ReleaseClient(http) { ResponseTimeout = TimeSpan.FromMilliseconds(50) };
+
+        await Assert.ThrowsAsync<HttpRequestException>(
+            () => client.GetReleasesAsync("someone/AnyPS5", TestContext.Current.CancellationToken));
+
+        // The caller giving up stays what it is.
+        using var givenUp = new CancellationTokenSource();
+        givenUp.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.GetReleasesAsync(cancellationToken: givenUp.Token));
+    }
+
+    [Fact]
+    public void A_build_that_is_not_a_numbered_version_is_never_taken_for_the_newest()
+    {
+        using var temp = new TempDirectory();
+        foreach (var version in new[] { "v0.1.5", "vmain-a6606d5-pr19326", "vmain-a6606d5", "v9.9.9@someone~AnyPS5" })
+        {
+            temp.Write($@"components\{version}\relinker.exe");
+            temp.Write($@"components\{version}\libs\libc.prx");
+        }
+        var store = new ComponentStore(temp.Combine("components"));
+
+        Assert.Equal(["v0.1.5", "vmain-a6606d5-pr19326", "vmain-a6606d5", "v9.9.9@someone~AnyPS5"], store.InstalledVersions());
+        Assert.Equal("v0.1.5", store.Resolve(new AppSettings()).Version);
+        Assert.Equal("vmain-a6606d5", store.Resolve(new AppSettings { ActiveVersion = "vmain-a6606d5" }).Version);
+    }
+
     [Theory]
     [InlineData("v0.1.5", true)]
     [InlineData("0.1.5-beta_2", true)]
@@ -88,6 +204,33 @@ public class ComponentTests
         store.Remove("v0.1.10");
         Assert.Equal(["v0.1.9", "v0.1.2"], store.InstalledVersions());
         Assert.False(new ComponentStore(temp.Combine("nothing")).Resolve(new AppSettings()).HasRelinker);
+    }
+
+    [Fact]
+    public void Fork_numbered_versions_are_ordered_numerically_for_fallback()
+    {
+        using var temp = new TempDirectory();
+        foreach (var version in new[]
+        {
+            "v0.1.9@someone~AnyPS5", "v0.1.10@someone~AnyPS5", "v0.1.2@another~AnyPS5",
+            "vmain@someone~AnyPS5",
+        })
+        {
+            temp.Write(Path.Combine("components", version, "relinker.exe"));
+            temp.Write(Path.Combine("components", version, "libs", "libc.prx"));
+        }
+        var store = new ComponentStore(temp.Combine("components"));
+
+        Assert.Equal(
+            ["v0.1.10@someone~AnyPS5", "v0.1.9@someone~AnyPS5", "v0.1.2@another~AnyPS5", "vmain@someone~AnyPS5"],
+            store.InstalledVersions());
+        Assert.Equal("v0.1.10@someone~AnyPS5", store.Resolve(new AppSettings { ActiveVersion = "missing" }).Version);
+        Assert.Equal("v0.1.9@someone~AnyPS5",
+            store.Resolve(new AppSettings { ActiveVersion = "v0.1.9@someone~AnyPS5" }).Version);
+
+        temp.Write(Path.Combine("components", "v0.1.1", "relinker.exe"));
+        temp.Write(Path.Combine("components", "v0.1.1", "libs", "libc.prx"));
+        Assert.Equal("v0.1.1", store.Resolve(new AppSettings { ActiveVersion = "missing" }).Version);
     }
 
     [Fact]
@@ -180,6 +323,15 @@ public class ComponentTests
     private sealed class Collector(List<InstallStage> stages) : IProgress<InstallProgress>
     {
         public void Report(InstallProgress value) { lock (stages) stages.Add(value.Stage); }
+    }
+
+    private sealed class NoAnswer : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        }
     }
 
     private sealed class FakeDownloads(Dictionary<string, byte[]> files) : HttpMessageHandler

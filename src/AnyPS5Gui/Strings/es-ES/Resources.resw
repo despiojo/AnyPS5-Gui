@@ -12,6 +12,8 @@
   <data name="Common_Cancel.Content" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Log_Copy.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Copiar el registro</value></data>
   <data name="Log_Copy.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Copiar el registro</value></data>
+  <data name="Log_OpenFile.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Abrir el archivo de registro: la ejecución entera, en texto</value></data>
+  <data name="Log_OpenFile.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Abrir el archivo de registro</value></data>
 
   <data name="Error_Title" xml:space="preserve"><value>Algo ha ido mal</value></data>
   <data name="Error_Details" xml:space="preserve"><value>Los detalles se han guardado en {0}</value></data>
@@ -149,6 +151,10 @@ Carpetas de módulos: {1}</value></data>
   <data name="Settings_Release.PlaceholderText" xml:space="preserve"><value>La más reciente</value></data>
   <data name="Settings_Check.Content" xml:space="preserve"><value>Buscar versiones</value></data>
   <data name="Settings_Install.Content" xml:space="preserve"><value>Descargar</value></data>
+  <data name="Settings_SourceHeader.Text" xml:space="preserve"><value>Compilaciones de otro repositorio</value></data>
+  <data name="Settings_SourceHelp.Text" xml:space="preserve"><value>Las versiones publicadas en otro repositorio de GitHub se listan junto a las de AnyPS5, con su nombre al lado: por ejemplo, un fork que publica compilaciones con cambios que AnyPS5 aún no ha publicado. AnyPS5 no las revisa ni les da soporte; añade solo un repositorio de confianza.</value></data>
+  <data name="Settings_ExtraSource.Header" xml:space="preserve"><value>Repositorio de GitHub (usuario/nombre)</value></data>
+  <data name="Settings_ExtraSource.PlaceholderText" xml:space="preserve"><value>Vacío: solo las versiones de AnyPS5</value></data>
   <data name="Settings_CustomHeader.Text" xml:space="preserve"><value>Tu propia compilación</value></data>
   <data name="Settings_CustomHelp.Text" xml:space="preserve"><value>Si compilas AnyPS5 por tu cuenta, indica tu relinker y la carpeta con sus bibliotecas para Windows. Se usan en lugar de los descargados.</value></data>
   <data name="Settings_CustomRelinker.Header" xml:space="preserve"><value>Relinker</value></data>
@@ -157,6 +163,10 @@ Carpetas de módulos: {1}</value></data>
   <data name="Settings_OutputRoot.Header" xml:space="preserve"><value>Carpeta para los juegos convertidos</value></data>
   <data name="Settings_OutputRoot.PlaceholderText" xml:space="preserve"><value>Vacío: junto a la carpeta de cada juego</value></data>
   <data name="Settings_OutputRootHelp.Text" xml:space="preserve"><value>Cada juego tiene aquí su propia subcarpeta. Si está en la misma unidad que tus volcados, los archivos del juego se pueden enlazar en vez de copiar.</value></data>
+  <data name="Settings_LogsHeader.Text" xml:space="preserve"><value>Registros</value></data>
+  <data name="Settings_LogsHelp.Text" xml:space="preserve"><value>Cada conversión, simulación y partida escribe toda su salida en un archivo de texto, que se puede leer mientras está en marcha. Al empezar una nueva se borran los archivos más antiguos.</value></data>
+  <data name="Settings_LogsKeep.Header" xml:space="preserve"><value>Archivos de registro que se conservan (con 0 no se escriben)</value></data>
+  <data name="Settings_LogsFolder.Content" xml:space="preserve"><value>Abrir la carpeta de registros</value></data>
   <data name="Settings_AppearanceHeader.Text" xml:space="preserve"><value>Apariencia</value></data>
   <data name="Settings_Language.Header" xml:space="preserve"><value>Idioma</value></data>
   <data name="Settings_LanguageSystem.Content" xml:space="preserve"><value>El de Windows</value></data>
@@ -180,6 +190,8 @@ Carpetas de módulos: {1}</value></data>
   <data name="Components_Custom" xml:space="preserve"><value>Se usa tu propio relinker.</value></data>
   <data name="Components_Using" xml:space="preserve"><value>Se usa AnyPS5 {0}.</value></data>
   <data name="Components_NoRelease" xml:space="preserve"><value>No se ha encontrado ninguna versión con relinker y bibliotecas para Windows.</value></data>
+  <data name="Components_BadSource" xml:space="preserve"><value>«{0}» no es un repositorio de GitHub: escríbelo como usuario/nombre.</value></data>
+  <data name="Components_SourceFailed" xml:space="preserve"><value>No se han podido leer las versiones de {0}: {1}</value></data>
   <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} está listo.</value></data>
   <data name="Components_Checking" xml:space="preserve"><value>Preguntando a GitHub por las versiones de AnyPS5…</value></data>
   <data name="Components_UpToDate" xml:space="preserve"><value>{0} es la versión más reciente y ya está descargada.</value></data>

@@ -19,9 +19,11 @@ public partial class SettingsViewModel : ObservableObject
     public SettingsViewModel()
     {
         OutputRoot = App.Settings.OutputRoot ?? "";
+        ExtraReleaseSource = App.Settings.ExtraReleaseSource ?? "";
         CustomRelinkerPath = App.Settings.CustomRelinkerPath ?? "";
         CustomLibsPath = App.Settings.CustomLibsPath ?? "";
         ThemeIndex = (int)App.Settings.Theme;
+        LogFilesToKeep = App.Settings.LogFilesToKeep;
         LanguageIndex = _languageAtStart = Math.Max(0, Array.IndexOf(LanguageTags, App.Settings.Language ?? ""));
 
         var host = App.Host;
@@ -36,9 +38,13 @@ public partial class SettingsViewModel : ObservableObject
     public ComponentsViewModel Components => App.ComponentsViewModel;
 
     [ObservableProperty] public partial string OutputRoot { get; set; }
+    [ObservableProperty] public partial string ExtraReleaseSource { get; set; }
     [ObservableProperty] public partial string CustomRelinkerPath { get; set; }
     [ObservableProperty] public partial string CustomLibsPath { get; set; }
     [ObservableProperty] public partial int ThemeIndex { get; set; }
+
+    /// <summary>NaN is the number box left empty: back to the default.</summary>
+    [ObservableProperty] public partial double LogFilesToKeep { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RestartNeeded))]
@@ -64,6 +70,14 @@ public partial class SettingsViewModel : ObservableObject
         App.ConvertViewModel.RefreshDefaultOutput();
     }
 
+    partial void OnExtraReleaseSourceChanged(string value)
+    {
+        if (App.Settings.ExtraReleaseSource == Clean(value)) return;
+        App.Settings.ExtraReleaseSource = Clean(value);
+        App.SaveSettings();
+        Components.ForgetReleases();
+    }
+
     partial void OnCustomRelinkerPathChanged(string value)
     {
         if (App.Settings.CustomRelinkerPath == Clean(value)) return;
@@ -78,6 +92,14 @@ public partial class SettingsViewModel : ObservableObject
         App.Settings.CustomLibsPath = Clean(value);
         App.SaveSettings();
         Components.NotifyChanged();
+    }
+
+    partial void OnLogFilesToKeepChanged(double value)
+    {
+        var keep = double.IsNaN(value) ? new AppSettings().LogFilesToKeep : (int)Math.Clamp(value, 0, 1000);
+        if (App.Settings.LogFilesToKeep == keep) return;
+        App.Settings.LogFilesToKeep = keep;
+        App.SaveSettings();
     }
 
     partial void OnThemeIndexChanged(int value)
@@ -116,11 +138,16 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenDataFolder()
+    private void OpenDataFolder() => OpenFolder(DataFolder);
+
+    [RelayCommand]
+    private void OpenLogsFolder() => OpenFolder(App.Paths.LogsDirectory);
+
+    private static void OpenFolder(string folder)
     {
-        Directory.CreateDirectory(DataFolder);
+        Directory.CreateDirectory(folder);
         var explorer = new System.Diagnostics.ProcessStartInfo("explorer.exe");
-        explorer.ArgumentList.Add(DataFolder);
+        explorer.ArgumentList.Add(folder);
         System.Diagnostics.Process.Start(explorer)?.Dispose();
     }
 

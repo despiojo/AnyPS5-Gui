@@ -70,7 +70,9 @@ public partial class ComponentsViewModel : ObservableObject
             if (!current.HasRelinker) return Loc.Get("Components_NotInstalled");
             var custom = !string.IsNullOrWhiteSpace(App.Settings.CustomRelinkerPath) &&
                          current.RelinkerPath == App.Settings.CustomRelinkerPath;
-            return custom ? Loc.Get("Components_Custom") : Loc.Format("Components_Using", current.Version);
+            return custom
+                ? Loc.Get("Components_Custom")
+                : Loc.Format("Components_Using", ComponentStore.VersionLabel(current.Version!));
         }
     }
 
@@ -105,7 +107,7 @@ public partial class ComponentsViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(IsIdle))]
     private async Task CheckAsync()
     {
-        await RunAsync(async _ => await LoadReleasesAsync());
+        await RunAsync(LoadReleasesAsync);
     }
 
     /// <summary>Downloads the selected release, or the newest one when none has been chosen.</summary>
@@ -114,7 +116,7 @@ public partial class ComponentsViewModel : ObservableObject
     {
         await RunAsync(async cancellation =>
         {
-            if (Releases.Count == 0) await LoadReleasesAsync();
+            if (Releases.Count == 0) await LoadReleasesAsync(cancellation);
             var release = SelectedRelease ?? Releases.FirstOrDefault();
             if (release is null)
             {
@@ -124,10 +126,10 @@ public partial class ComponentsViewModel : ObservableObject
 
             var progress = new Progress<InstallProgress>(Report);
             await App.Components.InstallAsync(release, App.Http, progress, cancellation);
-            App.Settings.ActiveVersion = release.Tag;
+            App.Settings.ActiveVersion = release.VersionName;
             App.SaveSettings();
             RefreshInstalled();
-            Status = Loc.Format("Components_Installed", release.Tag);
+            Status = Loc.Format("Components_Installed", release.Label);
         });
     }
 
@@ -154,18 +156,51 @@ public partial class ComponentsViewModel : ObservableObject
 
     private bool CanRemoveActive => IsIdle && ActiveVersion is not null;
 
-    private async Task LoadReleasesAsync()
+    private async Task LoadReleasesAsync(CancellationToken cancellation)
     {
         Status = Loc.Get("Components_Checking");
         IsIndeterminate = true;
-        var releases = await _client.GetReleasesAsync();
+        var releases = (await _client.GetReleasesAsync(cancellationToken: cancellation)).ToList();
+
+        // AnyPS5's own releases stay first, so "the newest" is never a build from elsewhere.
+        string? sourceError = null;
+        if (App.Settings.ExtraReleaseSource is { Length: > 0 } source &&
+            !source.Equals(ReleaseClient.Repository, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!ReleaseClient.IsValidRepository(source))
+            {
+                sourceError = Loc.Format("Components_BadSource", source);
+            }
+            else
+            {
+                // The source failing, or not answering in time, leaves AnyPS5's own releases to choose from.
+                try
+                {
+                    releases.AddRange(await _client.GetReleasesAsync(source, cancellation));
+                }
+                catch (HttpRequestException e)
+                {
+                    sourceError = Loc.Format("Components_SourceFailed", source, e.Message);
+                }
+            }
+        }
 
         Releases.Clear();
         foreach (var release in releases.Where(release => release.IsComplete)) Releases.Add(release);
         SelectedRelease = Releases.FirstOrDefault();
         Status = SelectedRelease is { } latest
-            ? Loc.Format(App.Components.IsInstalled(latest.Tag) ? "Components_UpToDate" : "Components_Available", latest.Tag)
+            ? Loc.Format(App.Components.IsInstalled(latest.VersionName) ? "Components_UpToDate" : "Components_Available", latest.Label)
             : Loc.Get("Components_NoRelease");
+        if (sourceError is not null) Error = sourceError;
+    }
+
+    /// <summary>The list was read from sources that are no longer the ones in the settings.</summary>
+    public void ForgetReleases()
+    {
+        Releases.Clear();
+        SelectedRelease = null;
+        Status = "";
+        Error = "";
     }
 
     private async Task RunAsync(Func<CancellationToken, Task> work)

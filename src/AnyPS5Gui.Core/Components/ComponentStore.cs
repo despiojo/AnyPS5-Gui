@@ -15,23 +15,27 @@ public sealed record ResolvedComponents(string? RelinkerPath, string? LibsPath, 
 }
 
 /// <summary>
-/// AnyPS5 releases downloaded by the app, one folder per version:
+/// AnyPS5 releases downloaded by the app, one folder per version. The folder is the version's name:
+/// the tag of the release and, for a build that is not AnyPS5's own, the repository it is from. Two
+/// repositories can use the same tag, and neither download may take the other's place.
 /// <code>
 /// components/
 ///     v0.1.5/
 ///         relinker.exe
 ///         libs/*.prx
+///     v0.1.5@someone~AnyPS5/
+///         ...
 /// </code>
 /// </summary>
 public sealed partial class ComponentStore(string root)
 {
     public string Root { get; } = root;
 
-    public string RelinkerPath(string tag) => Path.Combine(VersionDirectory(tag), "relinker.exe");
-    public string LibsPath(string tag) => Path.Combine(VersionDirectory(tag), "libs");
+    public string RelinkerPath(string version) => Path.Combine(VersionDirectory(version), "relinker.exe");
+    public string LibsPath(string version) => Path.Combine(VersionDirectory(version), "libs");
 
-    public bool IsInstalled(string tag) =>
-        IsValidTag(tag) && File.Exists(RelinkerPath(tag)) && Directory.Exists(LibsPath(tag));
+    public bool IsInstalled(string version) =>
+        IsValidVersion(version) && File.Exists(RelinkerPath(version)) && Directory.Exists(LibsPath(version));
 
     /// <summary>Newest version first.</summary>
     public IReadOnlyList<string> InstalledVersions()
@@ -43,6 +47,22 @@ public sealed partial class ComponentStore(string root)
             .Select(name => name!)
             .OrderByDescending(name => name, VersionOrder.Instance)
             .ToList();
+    }
+
+    /// <summary>
+    /// The name a release is downloaded under: its tag when it is AnyPS5's own, which is what the versions
+    /// downloaded before there were other sources are called, and <c>tag@owner~name</c> otherwise.
+    /// </summary>
+    public static string VersionName(string tag, string repository) =>
+        repository.Equals(ReleaseClient.Repository, StringComparison.OrdinalIgnoreCase)
+            ? tag
+            : $"{tag}@{repository.Replace('/', '~')}";
+
+    /// <summary>What to show for a version name: a build from elsewhere carries the name of where it is from.</summary>
+    public static string VersionLabel(string version)
+    {
+        var at = version.IndexOf('@');
+        return at < 0 ? version : $"{version[..at]}  ·  {version[(at + 1)..].Replace('~', '/')}";
     }
 
     /// <summary>Custom paths from the settings win over a downloaded version; the newest download is the fallback.</summary>
@@ -68,11 +88,12 @@ public sealed partial class ComponentStore(string root)
     public async Task InstallAsync(ReleaseInfo release, HttpClient http, IProgress<InstallProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (!IsValidTag(release.Tag)) throw new ArgumentException($"'{release.Tag}' is not a usable version name.");
+        var version = release.VersionName;
+        if (!IsValidVersion(version)) throw new ArgumentException($"'{version}' is not a usable version name.");
         if (release.Relinker is null || release.Libraries is null)
             throw new InvalidOperationException($"Release {release.Tag} has no Windows relinker or libraries.");
 
-        var staging = Path.Combine(Root, ".staging-" + release.Tag);
+        var staging = Path.Combine(Root, ".staging-" + version);
         if (Directory.Exists(staging)) Directory.Delete(staging, recursive: true);
         Directory.CreateDirectory(staging);
         try
@@ -87,7 +108,7 @@ public sealed partial class ComponentStore(string root)
                 cancellationToken).ConfigureAwait(false);
             File.Delete(archive);
 
-            var final = VersionDirectory(release.Tag);
+            var final = VersionDirectory(version);
             if (Directory.Exists(final)) Directory.Delete(final, recursive: true);
             Directory.Move(staging, final);
         }
@@ -97,13 +118,17 @@ public sealed partial class ComponentStore(string root)
         }
     }
 
-    public void Remove(string tag)
+    public void Remove(string version)
     {
-        if (IsValidTag(tag) && Directory.Exists(VersionDirectory(tag))) Directory.Delete(VersionDirectory(tag), recursive: true);
+        if (IsValidVersion(version) && Directory.Exists(VersionDirectory(version)))
+            Directory.Delete(VersionDirectory(version), recursive: true);
     }
 
-    /// <summary>A tag becomes a folder name, so it may hold nothing a path could abuse.</summary>
+    /// <summary>A tag goes into a folder name, so it may hold nothing a path could abuse.</summary>
     public static bool IsValidTag(string tag) => TagPattern().IsMatch(tag) && !tag.Contains("..");
+
+    /// <summary>A version name is a folder name: a tag, alone or followed by <c>@owner~name</c>.</summary>
+    public static bool IsValidVersion(string version) => VersionPattern().IsMatch(version) && !version.Contains("..");
 
     /// <summary>
     /// Unpacks the entries under <c>libs/</c> of the release archive into <paramref name="destination"/>.
@@ -168,23 +193,38 @@ public sealed partial class ComponentStore(string root)
         }
     }
 
-    private string VersionDirectory(string tag) => Path.Combine(Root, tag);
+    private string VersionDirectory(string version) => Path.Combine(Root, version);
 
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._-]*$")]
     private static partial Regex TagPattern();
 
-    /// <summary>Orders v0.1.10 after v0.1.9, which plain text order gets wrong.</summary>
+    // The part after the @ is what ReleaseClient takes for a repository, with ~ for its slash.
+    [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._-]*(@[A-Za-z0-9][A-Za-z0-9-]*~[A-Za-z0-9._-]+)?$")]
+    private static partial Regex VersionPattern();
+
+    /// <summary>
+    /// Official builds come before other sources, and numbered tags before other tags from the same
+    /// source. Numbered tags are compared as versions, so v0.1.10 comes after v0.1.9.
+    /// </summary>
     private sealed class VersionOrder : IComparer<string>
     {
         public static readonly VersionOrder Instance = new();
 
         public int Compare(string? x, string? y)
         {
-            var a = Parse(x);
-            var b = Parse(y);
-            return a is not null && b is not null
-                ? a.CompareTo(b)
-                : string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+            var aFork = x?.Contains('@') == true;
+            var bFork = y?.Contains('@') == true;
+            if (aFork != bFork) return aFork ? -1 : 1;
+
+            var a = Parse(x?.Split('@')[0]);
+            var b = Parse(y?.Split('@')[0]);
+            if (a is not null && b is not null)
+            {
+                var result = a.CompareTo(b);
+                if (result != 0) return result;
+            }
+            else if (a is not null || b is not null) return a is null ? -1 : 1;
+            return string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
         }
 
         private static Version? Parse(string? tag) =>

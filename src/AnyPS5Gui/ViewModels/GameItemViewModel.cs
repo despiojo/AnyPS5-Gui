@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using AnyPS5Gui.Core;
+using AnyPS5Gui.Core.Components;
 using AnyPS5Gui.Core.Launch;
 using AnyPS5Gui.Core.Library;
 using AnyPS5Gui.Core.Relinker;
@@ -35,7 +36,11 @@ public partial class GameItemViewModel : ObservableObject
     public string Directory => Entry.Directory;
 
     public string Subtitle => string.Join("  ·  ",
-        new[] { Entry.TitleId, Entry.ContentVersion, Entry.ComponentVersion is { } version ? "AnyPS5 " + version : null }
+        new[]
+            {
+                Entry.TitleId, Entry.ContentVersion,
+                Entry.ComponentVersion is { } version ? "AnyPS5 " + ComponentStore.VersionLabel(version) : null,
+            }
             .Where(part => !string.IsNullOrEmpty(part)));
 
     /// <summary>The variables the game will be started with, so nothing the app does is hidden.</summary>
@@ -177,6 +182,7 @@ public partial class GameItemViewModel : ObservableObject
             Environment = environment,
         };
 
+        Log.StartFile("run-" + (Entry.TitleId ?? Entry.Title));
         Log.Add(LogKind.Info, RelinkerCommand.Format(spec.FileName, spec.Arguments));
         foreach (var (name, value) in environment) Log.Add(LogKind.Info, $"{name}={value}");
 
@@ -199,6 +205,7 @@ public partial class GameItemViewModel : ObservableObject
         }
         finally
         {
+            Log.EndFile();
             _cancellation = null;
             IsRunning = false;
         }
