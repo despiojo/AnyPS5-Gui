@@ -57,8 +57,8 @@ public sealed class RunLog : IDisposable
     public static void Prune(string directory, int keep)
     {
         if (!Directory.Exists(directory)) return;
-        // The names start with the time, so their order is the order of the runs.
-        var old = Directory.GetFiles(directory, "*.log").OrderDescending(StringComparer.Ordinal).Skip(keep);
+        // Creation time also orders runs whose filename timestamps fall in the same second.
+        var old = Directory.GetFiles(directory, "*.log").OrderByDescending(File.GetCreationTimeUtc).Skip(keep);
         foreach (var file in old)
         {
             try { File.Delete(file); }
