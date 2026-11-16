@@ -43,6 +43,50 @@ public class ComponentTests
         Assert.False(releases[1].IsComplete);
     }
 
+    [Fact]
+    public void Releases_of_another_repository_carry_its_name()
+    {
+        var official = ReleaseClient.Parse(Releases)[0];
+        Assert.True(official.IsOfficial);
+        Assert.Equal("v0.1.5", official.Label);
+
+        var other = ReleaseClient.Parse(Releases, "someone/AnyPS5")[0];
+        Assert.False(other.IsOfficial);
+        Assert.Equal("someone/AnyPS5", other.Repository);
+        Assert.Equal("v0.1.5  ·  someone/AnyPS5", other.Label);
+    }
+
+    [Theory]
+    [InlineData("boykopovar/AnyPS5", true)]
+    [InlineData("some-one/Any.PS5_fork", true)]
+    [InlineData("AnyPS5", false)]
+    [InlineData("a/b/c", false)]
+    [InlineData("a/..", false)]
+    [InlineData("a b/c", false)]
+    [InlineData("a/b?per_page=1", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void A_release_source_is_an_owner_and_a_name(string? repository, bool expected)
+    {
+        Assert.Equal(expected, ReleaseClient.IsValidRepository(repository));
+    }
+
+    [Fact]
+    public void A_build_that_is_not_a_numbered_version_is_never_taken_for_the_newest()
+    {
+        using var temp = new TempDirectory();
+        foreach (var tag in new[] { "v0.1.5", "vmain-a6606d5-pr19326", "vmain-a6606d5" })
+        {
+            temp.Write($@"components\{tag}\relinker.exe");
+            temp.Write($@"components\{tag}\libs\libc.prx");
+        }
+        var store = new ComponentStore(temp.Combine("components"));
+
+        Assert.Equal(["v0.1.5", "vmain-a6606d5-pr19326", "vmain-a6606d5"], store.InstalledVersions());
+        Assert.Equal("v0.1.5", store.Resolve(new AppSettings()).Version);
+        Assert.Equal("vmain-a6606d5", store.Resolve(new AppSettings { ActiveVersion = "vmain-a6606d5" }).Version);
+    }
+
     [Theory]
     [InlineData("v0.1.5", true)]
     [InlineData("0.1.5-beta_2", true)]

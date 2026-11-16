@@ -36,7 +36,7 @@
                                   SelectedItem="{x:Bind ViewModel.Components.SelectedRelease, Mode=OneWay}">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="components:ReleaseInfo">
-                                    <TextBlock Text="{x:Bind Tag}" />
+                                    <TextBlock Text="{x:Bind Label}" />
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
@@ -57,6 +57,12 @@
                     <InfoBar Severity="Error" IsClosable="False"
                              IsOpen="{x:Bind ViewModel.Components.HasError, Mode=OneWay}"
                              Message="{x:Bind ViewModel.Components.Error, Mode=OneWay}" />
+
+                    <StackPanel Spacing="2" Margin="0,8,0,0">
+                        <TextBlock x:Uid="Settings_SourceHeader" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock x:Uid="Settings_SourceHelp" Style="{StaticResource SecondaryTextStyle}" />
+                    </StackPanel>
+                    <TextBox x:Uid="Settings_ExtraSource" Text="{x:Bind ViewModel.ExtraReleaseSource, Mode=TwoWay}" />
 
                     <StackPanel Spacing="2" Margin="0,8,0,0">
                         <TextBlock x:Uid="Settings_CustomHeader" Style="{StaticResource BodyStrongTextBlockStyle}" />

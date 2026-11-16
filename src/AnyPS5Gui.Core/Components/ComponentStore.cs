@@ -173,7 +173,10 @@ public sealed partial class ComponentStore(string root)
     [GeneratedRegex(@"^[A-Za-z0-9][A-Za-z0-9._-]*$")]
     private static partial Regex TagPattern();
 
-    /// <summary>Orders v0.1.10 after v0.1.9, which plain text order gets wrong.</summary>
+    /// <summary>
+    /// Orders v0.1.10 after v0.1.9, which plain text order gets wrong. A name that is not a version number,
+    /// such as a build from another source, comes after every numbered one: it is never taken for the newest.
+    /// </summary>
     private sealed class VersionOrder : IComparer<string>
     {
         public static readonly VersionOrder Instance = new();
@@ -182,9 +185,9 @@ public sealed partial class ComponentStore(string root)
         {
             var a = Parse(x);
             var b = Parse(y);
-            return a is not null && b is not null
-                ? a.CompareTo(b)
-                : string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+            if (a is not null && b is not null) return a.CompareTo(b);
+            if (a is null && b is null) return string.Compare(x, y, StringComparison.OrdinalIgnoreCase);
+            return a is null ? -1 : 1;
         }
 
         private static Version? Parse(string? tag) =>

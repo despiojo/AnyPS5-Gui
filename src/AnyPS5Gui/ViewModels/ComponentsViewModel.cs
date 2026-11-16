@@ -158,7 +158,29 @@ public partial class ComponentsViewModel : ObservableObject
     {
         Status = Loc.Get("Components_Checking");
         IsIndeterminate = true;
-        var releases = await _client.GetReleasesAsync();
+        var releases = (await _client.GetReleasesAsync()).ToList();
+
+        // AnyPS5's own releases stay first, so "the newest" is never a build from elsewhere.
+        string? sourceError = null;
+        if (App.Settings.ExtraReleaseSource is { Length: > 0 } source &&
+            !source.Equals(ReleaseClient.Repository, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!ReleaseClient.IsValidRepository(source))
+            {
+                sourceError = Loc.Format("Components_BadSource", source);
+            }
+            else
+            {
+                try
+                {
+                    releases.AddRange(await _client.GetReleasesAsync(source));
+                }
+                catch (HttpRequestException e)
+                {
+                    sourceError = Loc.Format("Components_SourceFailed", source, e.Message);
+                }
+            }
+        }
 
         Releases.Clear();
         foreach (var release in releases.Where(release => release.IsComplete)) Releases.Add(release);
@@ -166,6 +188,16 @@ public partial class ComponentsViewModel : ObservableObject
         Status = SelectedRelease is { } latest
             ? Loc.Format(App.Components.IsInstalled(latest.Tag) ? "Components_UpToDate" : "Components_Available", latest.Tag)
             : Loc.Get("Components_NoRelease");
+        if (sourceError is not null) Error = sourceError;
+    }
+
+    /// <summary>The list was read from sources that are no longer the ones in the settings.</summary>
+    public void ForgetReleases()
+    {
+        Releases.Clear();
+        SelectedRelease = null;
+        Status = "";
+        Error = "";
     }
 
     private async Task RunAsync(Func<CancellationToken, Task> work)

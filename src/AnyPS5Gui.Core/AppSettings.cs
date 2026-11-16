@@ -8,6 +8,12 @@ public sealed class AppSettings
     /// <summary>Tag of the downloaded AnyPS5 release in use, such as <c>v0.1.5</c>.</summary>
     public string? ActiveVersion { get; set; }
 
+    /// <summary>
+    /// Another GitHub repository (<c>owner/name</c>) whose releases are listed with AnyPS5's own, such as a
+    /// fork that publishes builds with changes AnyPS5 has not released yet.
+    /// </summary>
+    public string? ExtraReleaseSource { get; set; }
+
     /// <summary>A relinker to use instead of the downloaded one, for self-built AnyPS5.</summary>
     public string? CustomRelinkerPath { get; set; }
 

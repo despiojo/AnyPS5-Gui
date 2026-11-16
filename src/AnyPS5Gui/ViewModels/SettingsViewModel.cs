@@ -19,6 +19,7 @@ public partial class SettingsViewModel : ObservableObject
     public SettingsViewModel()
     {
         OutputRoot = App.Settings.OutputRoot ?? "";
+        ExtraReleaseSource = App.Settings.ExtraReleaseSource ?? "";
         CustomRelinkerPath = App.Settings.CustomRelinkerPath ?? "";
         CustomLibsPath = App.Settings.CustomLibsPath ?? "";
         ThemeIndex = (int)App.Settings.Theme;
@@ -37,6 +38,7 @@ public partial class SettingsViewModel : ObservableObject
     public ComponentsViewModel Components => App.ComponentsViewModel;
 
     [ObservableProperty] public partial string OutputRoot { get; set; }
+    [ObservableProperty] public partial string ExtraReleaseSource { get; set; }
     [ObservableProperty] public partial string CustomRelinkerPath { get; set; }
     [ObservableProperty] public partial string CustomLibsPath { get; set; }
     [ObservableProperty] public partial int ThemeIndex { get; set; }
@@ -66,6 +68,14 @@ public partial class SettingsViewModel : ObservableObject
         App.Settings.OutputRoot = Clean(value);
         App.SaveSettings();
         App.ConvertViewModel.RefreshDefaultOutput();
+    }
+
+    partial void OnExtraReleaseSourceChanged(string value)
+    {
+        if (App.Settings.ExtraReleaseSource == Clean(value)) return;
+        App.Settings.ExtraReleaseSource = Clean(value);
+        App.SaveSettings();
+        Components.ForgetReleases();
     }
 
     partial void OnCustomRelinkerPathChanged(string value)
