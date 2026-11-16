@@ -177,6 +177,7 @@ public partial class GameItemViewModel : ObservableObject
             Environment = environment,
         };
 
+        Log.StartFile("run-" + (Entry.TitleId ?? Entry.Title));
         Log.Add(LogKind.Info, RelinkerCommand.Format(spec.FileName, spec.Arguments));
         foreach (var (name, value) in environment) Log.Add(LogKind.Info, $"{name}={value}");
 
@@ -199,6 +200,7 @@ public partial class GameItemViewModel : ObservableObject
         }
         finally
         {
+            Log.EndFile();
             _cancellation = null;
             IsRunning = false;
         }

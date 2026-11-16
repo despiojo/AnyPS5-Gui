@@ -58,13 +58,14 @@ Launch settings are AnyPS5's environment variables. The Games page has controls 
 ### Good to know
 
 - Closing the app stops a running game or conversion: the app reads their output through pipes that end with it.
+- Every conversion, dry run and game run writes all of its output to a text file in the `logs` folder of the app's data, named after the time and the game. The window lists only the newest lines; the file has all of them and can be read while the game is running. The button beside the log opens it. The ten newest files are kept, a number you can change in **Settings**.
 - Keyboard, mouse and controller mapping is AnyPS5's `anyps5-input.ini`, placed beside the converted executable. See its [input mapping guide](https://github.com/boykopovar/AnyPS5/blob/main/docs/user/INPUT_MAPPING.md).
 - If you build AnyPS5 yourself, point **Settings** to your relinker and libraries folder and they are used instead of the downloaded ones.
 - The app is in English and Spanish, and follows Windows unless you choose a language in **Settings**.
 
 ### Where things are kept
 
-Settings, the game list and the downloaded AnyPS5 versions live in `%LOCALAPPDATA%\AnyPS5Gui`. Set the `ANYPS5GUI_DATA` environment variable to keep them in another folder, for example beside the app for a portable copy. Converted games are only ever written to the output folder you see on the Convert page.
+Settings, the game list, the downloaded AnyPS5 versions and the logs live in `%LOCALAPPDATA%\AnyPS5Gui`. Set the `ANYPS5GUI_DATA` environment variable to keep them in another folder, for example beside the app for a portable copy. Converted games are only ever written to the output folder you see on the Convert page.
 
 ## Security
 

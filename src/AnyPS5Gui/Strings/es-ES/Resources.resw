@@ -12,6 +12,8 @@
   <data name="Common_Cancel.Content" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Log_Copy.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Copiar el registro</value></data>
   <data name="Log_Copy.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Copiar el registro</value></data>
+  <data name="Log_OpenFile.[using:Microsoft.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve"><value>Abrir el archivo de registro: la ejecución entera, en texto</value></data>
+  <data name="Log_OpenFile.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Abrir el archivo de registro</value></data>
 
   <data name="Error_Title" xml:space="preserve"><value>Algo ha ido mal</value></data>
   <data name="Error_Details" xml:space="preserve"><value>Los detalles se han guardado en {0}</value></data>
@@ -157,6 +159,10 @@ Carpetas de módulos: {1}</value></data>
   <data name="Settings_OutputRoot.Header" xml:space="preserve"><value>Carpeta para los juegos convertidos</value></data>
   <data name="Settings_OutputRoot.PlaceholderText" xml:space="preserve"><value>Vacío: junto a la carpeta de cada juego</value></data>
   <data name="Settings_OutputRootHelp.Text" xml:space="preserve"><value>Cada juego tiene aquí su propia subcarpeta. Si está en la misma unidad que tus volcados, los archivos del juego se pueden enlazar en vez de copiar.</value></data>
+  <data name="Settings_LogsHeader.Text" xml:space="preserve"><value>Registros</value></data>
+  <data name="Settings_LogsHelp.Text" xml:space="preserve"><value>Cada conversión, simulación y partida escribe toda su salida en un archivo de texto, que se puede leer mientras está en marcha. Al empezar una nueva se borran los archivos más antiguos.</value></data>
+  <data name="Settings_LogsKeep.Header" xml:space="preserve"><value>Archivos de registro que se conservan (con 0 no se escriben)</value></data>
+  <data name="Settings_LogsFolder.Content" xml:space="preserve"><value>Abrir la carpeta de registros</value></data>
   <data name="Settings_AppearanceHeader.Text" xml:space="preserve"><value>Apariencia</value></data>
   <data name="Settings_Language.Header" xml:space="preserve"><value>Idioma</value></data>
   <data name="Settings_LanguageSystem.Content" xml:space="preserve"><value>El de Windows</value></data>

@@ -348,6 +348,7 @@ public partial class ConvertViewModel : ObservableObject
         if (request is null) return;
 
         Log.Clear();
+        Log.StartFile((dryRun ? "dryrun-" : "convert-") + (request.Game.Param?.TitleId ?? request.Game.DisplayName));
         ResultOpen = false;
         IsBusy = true;
         IsIndeterminate = true;
@@ -403,6 +404,7 @@ public partial class ConvertViewModel : ObservableObject
         }
         finally
         {
+            Log.EndFile();
             _cancellation = null;
             IsIndeterminate = false;
             Progress = 0;

@@ -23,6 +23,12 @@ public sealed class AppSettings
     public bool LinkFiles { get; set; } = true;
 
     public string? LastGameFolder { get; set; }
+
+    /// <summary>
+    /// Every conversion and every game run writes its output to a text file. This many of the newest
+    /// are kept; 0 writes none.
+    /// </summary>
+    public int LogFilesToKeep { get; set; } = 10;
 }
 
 public enum AppTheme { System, Light, Dark }

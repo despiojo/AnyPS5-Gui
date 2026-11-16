@@ -100,6 +100,21 @@
                 </StackPanel>
             </Border>
 
+            <!-- The text files of conversions and game runs -->
+            <Border Style="{StaticResource CardStyle}">
+                <StackPanel Spacing="8">
+                    <TextBlock x:Uid="Settings_LogsHeader" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock x:Uid="Settings_LogsHelp" Style="{StaticResource SecondaryTextStyle}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <NumberBox x:Uid="Settings_LogsKeep" MinWidth="260" Minimum="0" Maximum="1000"
+                                   SpinButtonPlacementMode="Inline"
+                                   Value="{x:Bind ViewModel.LogFilesToKeep, Mode=TwoWay}" />
+                        <Button x:Uid="Settings_LogsFolder" VerticalAlignment="Bottom"
+                                Command="{x:Bind ViewModel.OpenLogsFolderCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- Appearance -->
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="12">
