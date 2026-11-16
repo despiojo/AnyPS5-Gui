@@ -72,6 +72,21 @@ public class ComponentTests
     }
 
     [Fact]
+    public async Task A_release_list_that_never_arrives_is_a_failed_request_and_not_a_cancellation()
+    {
+        using var http = new HttpClient(new NoAnswer());
+        var client = new ReleaseClient(http) { ResponseTimeout = TimeSpan.FromMilliseconds(50) };
+
+        await Assert.ThrowsAsync<HttpRequestException>(
+            () => client.GetReleasesAsync("someone/AnyPS5", TestContext.Current.CancellationToken));
+
+        // The caller giving up stays what it is.
+        using var givenUp = new CancellationTokenSource();
+        givenUp.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.GetReleasesAsync(cancellationToken: givenUp.Token));
+    }
+
+    [Fact]
     public void A_build_that_is_not_a_numbered_version_is_never_taken_for_the_newest()
     {
         using var temp = new TempDirectory();
@@ -224,6 +239,15 @@ public class ComponentTests
     private sealed class Collector(List<InstallStage> stages) : IProgress<InstallProgress>
     {
         public void Report(InstallProgress value) { lock (stages) stages.Add(value.Stage); }
+    }
+
+    private sealed class NoAnswer : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        }
     }
 
     private sealed class FakeDownloads(Dictionary<string, byte[]> files) : HttpMessageHandler

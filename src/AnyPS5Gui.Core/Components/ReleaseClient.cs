@@ -38,15 +38,29 @@ public sealed partial class ReleaseClient(HttpClient http)
         return http;
     }
 
-    /// <summary>Newest first, drafts and prereleases left out.</summary>
+    /// <summary>How long GitHub is given to answer with a release list.</summary>
+    public TimeSpan ResponseTimeout { get; init; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Newest first, drafts and prereleases left out. An answer that does not arrive in time is a failed
+    /// request, an <see cref="HttpRequestException"/>: only the caller's own token cancels.
+    /// </summary>
     public async Task<IReadOnlyList<ReleaseInfo>> GetReleasesAsync(string repository = Repository,
         CancellationToken cancellationToken = default)
     {
         if (!IsValidRepository(repository)) throw new ArgumentException($"'{repository}' is not a GitHub repository name.", nameof(repository));
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(30));
-        var json = await http.GetStringAsync($"https://api.github.com/repos/{repository}/releases?per_page=15", timeout.Token)
-            .ConfigureAwait(false);
+        timeout.CancelAfter(ResponseTimeout);
+        string json;
+        try
+        {
+            json = await http.GetStringAsync($"https://api.github.com/repos/{repository}/releases?per_page=15", timeout.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException e) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new HttpRequestException($"GitHub did not answer within {ResponseTimeout.TotalSeconds:0.#} seconds.", e);
+        }
         return Parse(json, repository);
     }
 

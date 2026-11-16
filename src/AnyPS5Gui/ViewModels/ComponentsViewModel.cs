@@ -105,7 +105,7 @@ public partial class ComponentsViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(IsIdle))]
     private async Task CheckAsync()
     {
-        await RunAsync(async _ => await LoadReleasesAsync());
+        await RunAsync(LoadReleasesAsync);
     }
 
     /// <summary>Downloads the selected release, or the newest one when none has been chosen.</summary>
@@ -114,7 +114,7 @@ public partial class ComponentsViewModel : ObservableObject
     {
         await RunAsync(async cancellation =>
         {
-            if (Releases.Count == 0) await LoadReleasesAsync();
+            if (Releases.Count == 0) await LoadReleasesAsync(cancellation);
             var release = SelectedRelease ?? Releases.FirstOrDefault();
             if (release is null)
             {
@@ -154,11 +154,11 @@ public partial class ComponentsViewModel : ObservableObject
 
     private bool CanRemoveActive => IsIdle && ActiveVersion is not null;
 
-    private async Task LoadReleasesAsync()
+    private async Task LoadReleasesAsync(CancellationToken cancellation)
     {
         Status = Loc.Get("Components_Checking");
         IsIndeterminate = true;
-        var releases = (await _client.GetReleasesAsync()).ToList();
+        var releases = (await _client.GetReleasesAsync(cancellationToken: cancellation)).ToList();
 
         // AnyPS5's own releases stay first, so "the newest" is never a build from elsewhere.
         string? sourceError = null;
@@ -171,9 +171,10 @@ public partial class ComponentsViewModel : ObservableObject
             }
             else
             {
+                // The source failing, or not answering in time, leaves AnyPS5's own releases to choose from.
                 try
                 {
-                    releases.AddRange(await _client.GetReleasesAsync(source));
+                    releases.AddRange(await _client.GetReleasesAsync(source, cancellation));
                 }
                 catch (HttpRequestException e)
                 {
