@@ -72,6 +72,25 @@ public class RunLogTests
     }
 
     [Fact]
+    public void A_log_still_being_written_outlives_the_start_of_another_run()
+    {
+        using var temp = new TempDirectory();
+        string path;
+        using (var game = RunLog.Start(temp.Path, "run", keep: 1, Noon)!)
+        {
+            path = game.Path;
+            using var dryRun = RunLog.Start(temp.Path, "dryrun", keep: 1, Noon.AddMinutes(5))!;
+            game.Write("crashed");
+        }
+
+        Assert.Equal(["crashed"], File.ReadAllLines(path));
+
+        // Once it is closed, the next run takes it away like any other.
+        using var later = RunLog.Start(temp.Path, "run", keep: 1, Noon.AddMinutes(10))!;
+        Assert.Equal([later.Path], Directory.GetFiles(temp.Path));
+    }
+
+    [Fact]
     public void Keeping_none_writes_no_file_and_removes_the_old_ones()
     {
         using var temp = new TempDirectory();

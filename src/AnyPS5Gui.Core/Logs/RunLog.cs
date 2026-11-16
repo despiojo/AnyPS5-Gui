@@ -38,8 +38,9 @@ public sealed class RunLog : IDisposable
             var path = System.IO.Path.Combine(directory, attempt == 1 ? stem + ".log" : $"{stem}-{attempt}.log");
             try
             {
-                // Shared for reading and deleting: an editor can follow the file, and pruning never trips on it.
-                var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read | FileShare.Delete);
+                // Shared for reading, so an editor can follow the file, but not for deleting: another run that
+                // starts meanwhile must not take away a log whose run has not said its last word.
+                var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
                 return new RunLog(path, new StreamWriter(stream, new UTF8Encoding(false)) { AutoFlush = true });
             }
             catch (IOException) when (File.Exists(path) && attempt < 100)
@@ -49,7 +50,10 @@ public sealed class RunLog : IDisposable
         }
     }
 
-    /// <summary>Deletes all but the newest logs. A file that cannot be deleted now is left for the next time.</summary>
+    /// <summary>
+    /// Deletes all but the newest logs. A file that cannot be deleted now, such as the log of a run that
+    /// is still going on, is left for the next time.
+    /// </summary>
     public static void Prune(string directory, int keep)
     {
         if (!Directory.Exists(directory)) return;
