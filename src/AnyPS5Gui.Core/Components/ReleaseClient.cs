@@ -13,8 +13,11 @@ public sealed record ReleaseInfo(string Tag, DateTimeOffset? PublishedAt, Releas
 
     public bool IsOfficial => Repository.Equals(ReleaseClient.Repository, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>The name the release is downloaded under and chosen by afterwards.</summary>
+    public string VersionName => ComponentStore.VersionName(Tag, Repository);
+
     /// <summary>What the list of versions shows: a build from elsewhere carries the name of where it is from.</summary>
-    public string Label => IsOfficial ? Tag : $"{Tag}  ·  {Repository}";
+    public string Label => ComponentStore.VersionLabel(VersionName);
 
     public bool IsComplete => Relinker is not null && Libraries is not null;
     public long DownloadSize => (Relinker?.Size ?? 0) + (Libraries?.Size ?? 0);

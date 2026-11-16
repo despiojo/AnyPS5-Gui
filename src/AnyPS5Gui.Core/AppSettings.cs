@@ -5,7 +5,10 @@ public sealed class AppSettings
     /// <summary>Folder that receives one subfolder per converted game. Empty: next to the game's own folder.</summary>
     public string? OutputRoot { get; set; }
 
-    /// <summary>Tag of the downloaded AnyPS5 release in use, such as <c>v0.1.5</c>.</summary>
+    /// <summary>
+    /// Name of the downloaded AnyPS5 version in use: the tag of its release, such as <c>v0.1.5</c>, followed
+    /// by <c>@owner~name</c> when it is a build from another repository.
+    /// </summary>
     public string? ActiveVersion { get; set; }
 
     /// <summary>

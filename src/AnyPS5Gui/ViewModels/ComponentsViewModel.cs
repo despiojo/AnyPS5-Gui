@@ -70,7 +70,9 @@ public partial class ComponentsViewModel : ObservableObject
             if (!current.HasRelinker) return Loc.Get("Components_NotInstalled");
             var custom = !string.IsNullOrWhiteSpace(App.Settings.CustomRelinkerPath) &&
                          current.RelinkerPath == App.Settings.CustomRelinkerPath;
-            return custom ? Loc.Get("Components_Custom") : Loc.Format("Components_Using", current.Version);
+            return custom
+                ? Loc.Get("Components_Custom")
+                : Loc.Format("Components_Using", ComponentStore.VersionLabel(current.Version!));
         }
     }
 
@@ -124,10 +126,10 @@ public partial class ComponentsViewModel : ObservableObject
 
             var progress = new Progress<InstallProgress>(Report);
             await App.Components.InstallAsync(release, App.Http, progress, cancellation);
-            App.Settings.ActiveVersion = release.Tag;
+            App.Settings.ActiveVersion = release.VersionName;
             App.SaveSettings();
             RefreshInstalled();
-            Status = Loc.Format("Components_Installed", release.Tag);
+            Status = Loc.Format("Components_Installed", release.Label);
         });
     }
 
@@ -187,7 +189,7 @@ public partial class ComponentsViewModel : ObservableObject
         foreach (var release in releases.Where(release => release.IsComplete)) Releases.Add(release);
         SelectedRelease = Releases.FirstOrDefault();
         Status = SelectedRelease is { } latest
-            ? Loc.Format(App.Components.IsInstalled(latest.Tag) ? "Components_UpToDate" : "Components_Available", latest.Tag)
+            ? Loc.Format(App.Components.IsInstalled(latest.VersionName) ? "Components_UpToDate" : "Components_Available", latest.Label)
             : Loc.Get("Components_NoRelease");
         if (sourceError is not null) Error = sourceError;
     }

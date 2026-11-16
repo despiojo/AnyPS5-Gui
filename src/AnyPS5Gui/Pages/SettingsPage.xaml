@@ -4,7 +4,12 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:components="using:AnyPS5Gui.Core.Components"
+    xmlns:local="using:AnyPS5Gui"
     xmlns:vm="using:AnyPS5Gui.ViewModels">
+
+    <Page.Resources>
+        <local:VersionLabelConverter x:Key="VersionLabel" />
+    </Page.Resources>
 
     <ScrollViewer>
         <StackPanel Padding="24,20,24,24" Spacing="12" MaxWidth="1100">
@@ -24,7 +29,13 @@
                         <ComboBox x:Name="InstalledBox" x:Uid="Settings_ActiveVersion" MinWidth="180"
                                   SelectionChanged="OnActiveVersionSelected"
                                   ItemsSource="{x:Bind ViewModel.Components.Installed}"
-                                  SelectedItem="{x:Bind ViewModel.Components.ActiveVersion, Mode=OneWay}" />
+                                  SelectedItem="{x:Bind ViewModel.Components.ActiveVersion, Mode=OneWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <TextBlock Text="{x:Bind Converter={StaticResource VersionLabel}}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <Button x:Uid="Settings_RemoveVersion" VerticalAlignment="Bottom"
                                 Command="{x:Bind ViewModel.Components.RemoveActiveCommand}" />
                     </StackPanel>
