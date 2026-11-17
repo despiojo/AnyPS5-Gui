@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -51,20 +52,22 @@ public sealed partial class ReleaseClient(HttpClient http)
     public async Task<IReadOnlyList<ReleaseInfo>> GetReleasesAsync(string repository = Repository,
         CancellationToken cancellationToken = default)
     {
-        if (!IsValidRepository(repository)) throw new ArgumentException($"'{repository}' is not a GitHub repository name.", nameof(repository));
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeout.CancelAfter(ResponseTimeout);
-        string json;
-        try
-        {
-            json = await http.GetStringAsync($"https://api.github.com/repos/{repository}/releases?per_page=15", timeout.Token)
-                .ConfigureAwait(false);
-        }
-        catch (OperationCanceledException e) when (!cancellationToken.IsCancellationRequested)
-        {
-            throw new HttpRequestException($"GitHub did not answer within {ResponseTimeout.TotalSeconds:0.#} seconds.", e);
-        }
-        return Parse(json, repository);
+        var json = await ReadAsync($"https://api.github.com/repos/{Checked(repository)}/releases?per_page=15",
+            cancellationToken).ConfigureAwait(false);
+        return Parse(json!, repository);
+    }
+
+    /// <summary>
+    /// The release the repository marks as its latest, which is its owner's choice and not always the
+    /// first of its list. Nothing when it has published none. Fails as <see cref="GetReleasesAsync"/> does.
+    /// </summary>
+    public async Task<ReleaseInfo?> GetLatestReleaseAsync(string repository, CancellationToken cancellationToken = default)
+    {
+        var json = await ReadAsync($"https://api.github.com/repos/{Checked(repository)}/releases/latest",
+            cancellationToken, missingIsNothing: true).ConfigureAwait(false);
+        if (json is null) return null;
+        using var document = JsonDocument.Parse(json);
+        return ReadRelease(document.RootElement, repository);
     }
 
     public static IReadOnlyList<ReleaseInfo> Parse(string json, string repository = Repository)
@@ -73,26 +76,55 @@ public sealed partial class ReleaseClient(HttpClient http)
         var releases = new List<ReleaseInfo>();
         foreach (var release in document.RootElement.EnumerateArray())
         {
-            if (Flag(release, "draft") || Flag(release, "prerelease")) continue;
-            if (Text(release, "tag_name") is not { } tag || !ComponentStore.IsValidTag(tag)) continue;
-
-            ReleaseAsset? relinker = null, libraries = null;
-            if (release.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var asset in assets.EnumerateArray())
-                {
-                    if (ReadAsset(asset) is not { } read) continue;
-                    if (read.Name.Equals($"relinker-{tag}.exe", StringComparison.OrdinalIgnoreCase)) relinker = read;
-                    else if (read.Name.Equals($"prx-windows-{tag}.zip", StringComparison.OrdinalIgnoreCase)) libraries = read;
-                }
-            }
-
-            DateTimeOffset? published = release.TryGetProperty("published_at", out var date) &&
-                                        date.ValueKind == JsonValueKind.String &&
-                                        date.TryGetDateTimeOffset(out var parsed) ? parsed : null;
-            releases.Add(new ReleaseInfo(tag, published, relinker, libraries) { Repository = repository });
+            if (ReadRelease(release, repository) is { } read) releases.Add(read);
         }
         return releases;
+    }
+
+    private static string Checked(string repository) =>
+        IsValidRepository(repository)
+            ? repository
+            : throw new ArgumentException($"'{repository}' is not a GitHub repository name.", nameof(repository));
+
+    private async Task<string?> ReadAsync(string url, CancellationToken cancellationToken, bool missingIsNothing = false)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(ResponseTimeout);
+        try
+        {
+            using var response = await http.GetAsync(url, timeout.Token).ConfigureAwait(false);
+            if (missingIsNothing && response.StatusCode == HttpStatusCode.NotFound) return null;
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException e) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new HttpRequestException($"GitHub did not answer within {ResponseTimeout.TotalSeconds:0.#} seconds.", e);
+        }
+    }
+
+    /// <summary>Nothing for a draft, a prerelease or a tag that could not name a folder.</summary>
+    private static ReleaseInfo? ReadRelease(JsonElement release, string repository)
+    {
+        if (release.ValueKind != JsonValueKind.Object) return null;
+        if (Flag(release, "draft") || Flag(release, "prerelease")) return null;
+        if (Text(release, "tag_name") is not { } tag || !ComponentStore.IsValidTag(tag)) return null;
+
+        ReleaseAsset? relinker = null, libraries = null;
+        if (release.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var asset in assets.EnumerateArray())
+            {
+                if (ReadAsset(asset) is not { } read) continue;
+                if (read.Name.Equals($"relinker-{tag}.exe", StringComparison.OrdinalIgnoreCase)) relinker = read;
+                else if (read.Name.Equals($"prx-windows-{tag}.zip", StringComparison.OrdinalIgnoreCase)) libraries = read;
+            }
+        }
+
+        DateTimeOffset? published = release.TryGetProperty("published_at", out var date) &&
+                                    date.ValueKind == JsonValueKind.String &&
+                                    date.TryGetDateTimeOffset(out var parsed) ? parsed : null;
+        return new ReleaseInfo(tag, published, relinker, libraries) { Repository = repository };
     }
 
     private static ReleaseAsset? ReadAsset(JsonElement asset)

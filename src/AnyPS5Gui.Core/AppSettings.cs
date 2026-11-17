@@ -17,6 +17,12 @@ public sealed class AppSettings
     /// </summary>
     public string? ExtraReleaseSource { get; set; }
 
+    /// <summary>
+    /// A download with no version chosen takes the release <see cref="ExtraReleaseSource"/> marks as its
+    /// latest, instead of AnyPS5's newest.
+    /// </summary>
+    public bool PreferExtraReleaseSource { get; set; }
+
     /// <summary>A relinker to use instead of the downloaded one, for self-built AnyPS5.</summary>
     public string? CustomRelinkerPath { get; set; }
 

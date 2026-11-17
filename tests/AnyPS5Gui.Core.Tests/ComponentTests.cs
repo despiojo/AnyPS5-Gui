@@ -144,6 +144,57 @@ public class ComponentTests
     }
 
     [Fact]
+    public async Task The_latest_release_of_a_repository_is_the_one_GitHub_marks_as_such()
+    {
+        const string latest = """
+            {
+              "tag_name": "vmain-a72186d", "prerelease": false, "draft": false, "published_at": "2026-11-17T06:07:03Z",
+              "assets": [
+                { "name": "relinker-vmain-a72186d.exe", "size": 7, "browser_download_url": "https://example.test/r.exe" },
+                { "name": "prx-windows-vmain-a72186d.zip", "size": 9, "browser_download_url": "https://example.test/p.zip" }
+              ]
+            }
+            """;
+        using var http = new HttpClient(new FakeDownloads(new()
+        {
+            ["https://api.github.com/repos/someone/AnyPS5/releases/latest"] = System.Text.Encoding.UTF8.GetBytes(latest),
+        }));
+        var client = new ReleaseClient(http);
+
+        var release = await client.GetLatestReleaseAsync("someone/AnyPS5", TestContext.Current.CancellationToken);
+
+        Assert.NotNull(release);
+        Assert.Equal("vmain-a72186d@someone~AnyPS5", release.VersionName);
+        Assert.True(release.IsComplete);
+        Assert.Equal(16, release.DownloadSize);
+
+        // GitHub answers 404 for a repository that has published nothing: that is not a failure.
+        Assert.Null(await client.GetLatestReleaseAsync("nobody/Nothing", TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => client.GetLatestReleaseAsync("a/b?per_page=1", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task A_latest_release_that_never_arrives_is_a_failed_request()
+    {
+        using var http = new HttpClient(new NoAnswer());
+        var client = new ReleaseClient(http) { ResponseTimeout = TimeSpan.FromMilliseconds(50) };
+
+        await Assert.ThrowsAsync<HttpRequestException>(
+            () => client.GetLatestReleaseAsync("someone/AnyPS5", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task A_release_list_that_GitHub_refuses_is_a_failed_request()
+    {
+        using var http = new HttpClient(new FakeDownloads([]));
+        var client = new ReleaseClient(http);
+
+        await Assert.ThrowsAsync<HttpRequestException>(
+            () => client.GetReleasesAsync("nobody/Nothing", TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public void A_build_that_is_not_a_numbered_version_is_never_taken_for_the_newest()
     {
         using var temp = new TempDirectory();

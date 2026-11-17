@@ -76,6 +76,8 @@
                     <!-- Not while a check or a download is going on: its answer is about the source it started with. -->
                     <TextBox x:Uid="Settings_ExtraSource" Text="{x:Bind ViewModel.ExtraReleaseSource, Mode=TwoWay}"
                              IsEnabled="{x:Bind ViewModel.Components.IsIdle, Mode=OneWay}" />
+                    <CheckBox x:Uid="Settings_PreferSource" IsChecked="{x:Bind ViewModel.PreferExtraReleaseSource, Mode=TwoWay}"
+                              IsEnabled="{x:Bind ViewModel.Components.IsIdle, Mode=OneWay}" />
 
                     <StackPanel Spacing="2" Margin="0,8,0,0">
                         <TextBlock x:Uid="Settings_CustomHeader" Style="{StaticResource BodyStrongTextBlockStyle}" />

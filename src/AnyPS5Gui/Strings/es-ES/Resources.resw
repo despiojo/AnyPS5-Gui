@@ -155,6 +155,7 @@ Carpetas de módulos: {1}</value></data>
   <data name="Settings_SourceHelp.Text" xml:space="preserve"><value>Las versiones publicadas en otro repositorio de GitHub se listan junto a las de AnyPS5, con su nombre al lado: por ejemplo, un fork que publica compilaciones con cambios que AnyPS5 aún no ha publicado. AnyPS5 no las revisa ni les da soporte; añade solo un repositorio de confianza.</value></data>
   <data name="Settings_ExtraSource.Header" xml:space="preserve"><value>Repositorio de GitHub (usuario/nombre)</value></data>
   <data name="Settings_ExtraSource.PlaceholderText" xml:space="preserve"><value>Vacío: solo las versiones de AnyPS5</value></data>
+  <data name="Settings_PreferSource.Content" xml:space="preserve"><value>Descargar la versión que este repositorio marca como la última, en lugar de la más reciente de AnyPS5, cuando no se elige ninguna</value></data>
   <data name="Settings_CustomHeader.Text" xml:space="preserve"><value>Tu propia compilación</value></data>
   <data name="Settings_CustomHelp.Text" xml:space="preserve"><value>Si compilas AnyPS5 por tu cuenta, indica tu relinker y la carpeta con sus bibliotecas para Windows. Se usan en lugar de los descargados.</value></data>
   <data name="Settings_CustomRelinker.Header" xml:space="preserve"><value>Relinker</value></data>
@@ -192,6 +193,7 @@ Carpetas de módulos: {1}</value></data>
   <data name="Components_NoRelease" xml:space="preserve"><value>No se ha encontrado ninguna versión con relinker y bibliotecas para Windows.</value></data>
   <data name="Components_BadSource" xml:space="preserve"><value>«{0}» no es un repositorio de GitHub: escríbelo como usuario/nombre.</value></data>
   <data name="Components_SourceFailed" xml:space="preserve"><value>No se han podido leer las versiones de {0}: {1}</value></data>
+  <data name="Components_NoLatest" xml:space="preserve"><value>{0} no marca como última ninguna versión con relinker y bibliotecas para Windows. Elige una versión de la lista.</value></data>
   <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} está listo.</value></data>
   <data name="Components_Checking" xml:space="preserve"><value>Preguntando a GitHub por las versiones de AnyPS5…</value></data>
   <data name="Components_UpToDate" xml:space="preserve"><value>{0} es la versión más reciente y ya está descargada.</value></data>
