@@ -242,9 +242,15 @@ public partial class ConvertViewModel : ObservableObject
         {
             foreach (var issue in game.Issues)
             {
-                var severity = issue is GameIssue.NoExecutable or GameIssue.WrappedExecutable or GameIssue.NotAnElf
-                    ? InfoBarSeverity.Error
-                    : InfoBarSeverity.Warning;
+                // One line says it for a game that comes in containers, executable and modules alike.
+                if (issue == GameIssue.WrappedModules && game.Kind == ExecutableKind.Self) continue;
+                var severity = issue switch
+                {
+                    GameIssue.NoExecutable or GameIssue.NotAnElf => InfoBarSeverity.Error,
+                    // Nothing to do about these: the conversion unwraps them.
+                    GameIssue.WrappedExecutable or GameIssue.WrappedModules => InfoBarSeverity.Informational,
+                    _ => InfoBarSeverity.Warning,
+                };
                 Issues.Add(new IssueItem(severity, Loc.Format("Issue_" + issue, game.WrappedModules)));
             }
             if (game.HasPatchFile) Issues.Add(new IssueItem(InfoBarSeverity.Informational, Loc.Get("Convert_PatchFileFound")));
@@ -395,7 +401,7 @@ public partial class ConvertViewModel : ObservableObject
         }
         catch (ConversionException e)
         {
-            Finish(InfoBarSeverity.Error, Loc.Get("Problem_" + e.Problem));
+            Finish(InfoBarSeverity.Error, Loc.Format("Problem_" + e.Problem, e.Detail));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or Win32Exception
                                       or ArgumentException or NotSupportedException)

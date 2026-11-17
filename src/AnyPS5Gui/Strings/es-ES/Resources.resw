@@ -21,7 +21,7 @@
 
   <!-- Convert page -->
   <data name="Convert_Title.Text" xml:space="preserve"><value>Convertir un juego</value></data>
-  <data name="Convert_Intro.Text" xml:space="preserve"><value>Convierte un juego de PS5 volcado en un programa de Windows con AnyPS5. El juego tiene que estar ya extraído y descifrado: aquí no se desempaqueta ni se descifra nada.</value></data>
+  <data name="Convert_Intro.Text" xml:space="preserve"><value>Convierte un juego de PS5 volcado en un programa de Windows con AnyPS5. El juego tiene que estar ya volcado y descifrado: aquí no se descifra nada.</value></data>
   <data name="Convert_ComponentsMissing.Title" xml:space="preserve"><value>AnyPS5 todavía no está descargado</value></data>
   <data name="Convert_ComponentsMissing.Message" xml:space="preserve"><value>El relinker y las bibliotecas del sistema salen de las versiones publicadas de AnyPS5 en GitHub (unos 115 MB).</value></data>
   <data name="Convert_Download.Content" xml:space="preserve"><value>Descargar</value></data>
@@ -69,11 +69,11 @@
 Carpetas de módulos: {1}</value></data>
   <data name="Convert_PatchFileFound" xml:space="preserve"><value>Esta carpeta trae un relinker-patches.toml. Se aplica salvo que elijas otra cosa en Opciones avanzadas.</value></data>
   <data name="Issue_NoExecutable" xml:space="preserve"><value>Aquí no hay ningún eboot.bin. Elige la carpeta de un juego extraído, o su ejecutable con «Archivo…».</value></data>
-  <data name="Issue_WrappedExecutable" xml:space="preserve"><value>El ejecutable sigue siendo un contenedor SELF. El relinker necesita un ELF limpio: desenvuélvelo antes, por ejemplo con tools/unwrap_self.py del repositorio de AnyPS5.</value></data>
+  <data name="Issue_WrappedExecutable" xml:space="preserve"><value>El juego viene en contenedores SELF, como suele venir un volcado. Se desenvuelven en la carpeta de salida antes de convertir; el volcado no se modifica.</value></data>
   <data name="Issue_NotAnElf" xml:space="preserve"><value>El ejecutable no es un archivo ELF. Puede que siga cifrado.</value></data>
   <data name="Issue_NoModuleDirectory" xml:space="preserve"><value>No hay carpeta sce_module, sce_modules ni prx junto al ejecutable. Sin ninguna el relinker se detiene, salvo que añadas una carpeta de módulos en Opciones avanzadas («.» es la propia carpeta del juego).</value></data>
   <data name="Issue_BothModuleDirectories" xml:space="preserve"><value>La carpeta tiene sce_module y sce_modules a la vez. El relinker solo acepta una de las dos.</value></data>
-  <data name="Issue_WrappedModules" xml:space="preserve"><value>Módulos que siguen siendo contenedores SELF: {0}. El relinker los salta; desenvuélvelos si el juego los necesita.</value></data>
+  <data name="Issue_WrappedModules" xml:space="preserve"><value>Módulos que vienen en contenedores SELF: {0}. Se desenvuelven en la carpeta de salida antes de convertir; el volcado no se modifica.</value></data>
   <data name="Convert_Failed" xml:space="preserve"><value>El relinker ha fallado (código de salida {0}). El motivo está en el registro.</value></data>
   <data name="Convert_DryRunDone" xml:space="preserve"><value>Simulación terminada: no se ha escrito nada.</value></data>
   <data name="Convert_LibrariesPlaced" xml:space="preserve"><value>Bibliotecas del sistema: {0}</value></data>
@@ -86,6 +86,10 @@ Carpetas de módulos: {1}</value></data>
   <data name="Problem_RelinkerMissing" xml:space="preserve"><value>No se encuentra el relinker. Descarga AnyPS5, o revisa la ruta de tu propia compilación en Configuración.</value></data>
   <data name="Problem_OutputInsideGame" xml:space="preserve"><value>La carpeta de salida no puede ser la del juego ni estar dentro de ella.</value></data>
   <data name="Problem_GameInsideOutput" xml:space="preserve"><value>La carpeta de salida no puede contener la del juego.</value></data>
+  <data name="Problem_EncryptedContainer" xml:space="preserve"><value>{0} sigue cifrado: este volcado no se descifró. La aplicación desenvuelve un contenedor SELF, no lo descifra.</value></data>
+  <data name="Problem_CompressedContainer" xml:space="preserve"><value>{0} es un contenedor SELF con segmentos comprimidos, que la aplicación todavía no sabe desenvolver.</value></data>
+  <data name="Problem_MalformedContainer" xml:space="preserve"><value>{0} parece un contenedor SELF, pero lo que contiene no cuadra, así que no se puede desenvolver.</value></data>
+  <data name="Stage_Unwrapping" xml:space="preserve"><value>Desenvolviendo el ejecutable y sus módulos…</value></data>
   <data name="Stage_Relinking" xml:space="preserve"><value>Ejecutando el relinker…</value></data>
   <data name="Stage_Libraries" xml:space="preserve"><value>Colocando las bibliotecas del sistema…</value></data>
   <data name="Stage_GameFiles" xml:space="preserve"><value>Colocando los archivos del juego…</value></data>

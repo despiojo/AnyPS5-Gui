@@ -21,7 +21,7 @@
 
   <!-- Convert page -->
   <data name="Convert_Title.Text" xml:space="preserve"><value>Convert a game</value></data>
-  <data name="Convert_Intro.Text" xml:space="preserve"><value>Turn a dumped PS5 game into a Windows program with AnyPS5. The game has to be extracted and decrypted already: nothing is unpacked or decrypted here.</value></data>
+  <data name="Convert_Intro.Text" xml:space="preserve"><value>Turn a dumped PS5 game into a Windows program with AnyPS5. The game has to be dumped and decrypted already: nothing is decrypted here.</value></data>
   <data name="Convert_ComponentsMissing.Title" xml:space="preserve"><value>AnyPS5 is not downloaded yet</value></data>
   <data name="Convert_ComponentsMissing.Message" xml:space="preserve"><value>The relinker and the system libraries come from the AnyPS5 releases on GitHub (about 115 MB).</value></data>
   <data name="Convert_Download.Content" xml:space="preserve"><value>Download</value></data>
@@ -69,11 +69,11 @@
 Module folders: {1}</value></data>
   <data name="Convert_PatchFileFound" xml:space="preserve"><value>This folder has a relinker-patches.toml. It is applied unless you choose otherwise under Advanced options.</value></data>
   <data name="Issue_NoExecutable" xml:space="preserve"><value>No eboot.bin was found here. Choose the folder of an extracted game, or its executable with “File…”.</value></data>
-  <data name="Issue_WrappedExecutable" xml:space="preserve"><value>The executable is still a SELF container. The relinker needs a plain ELF: unwrap it first, for example with tools/unwrap_self.py from the AnyPS5 repository.</value></data>
+  <data name="Issue_WrappedExecutable" xml:space="preserve"><value>The game comes as SELF containers, as a dump usually does. They are unwrapped into the output folder before converting; the dump itself is not changed.</value></data>
   <data name="Issue_NotAnElf" xml:space="preserve"><value>The executable is not an ELF file. It may still be encrypted.</value></data>
   <data name="Issue_NoModuleDirectory" xml:space="preserve"><value>There is no sce_module, sce_modules or prx folder beside the executable. The relinker stops without one, unless you add a module folder under Advanced options (“.” is the game folder itself).</value></data>
   <data name="Issue_BothModuleDirectories" xml:space="preserve"><value>The folder has both sce_module and sce_modules. The relinker accepts only one of them.</value></data>
-  <data name="Issue_WrappedModules" xml:space="preserve"><value>Modules that are still SELF containers: {0}. The relinker skips them; unwrap them if the game needs them.</value></data>
+  <data name="Issue_WrappedModules" xml:space="preserve"><value>Modules that come as SELF containers: {0}. They are unwrapped into the output folder before converting; the dump itself is not changed.</value></data>
   <data name="Convert_Failed" xml:space="preserve"><value>The relinker failed (exit code {0}). The log has the reason.</value></data>
   <data name="Convert_DryRunDone" xml:space="preserve"><value>Dry run finished: nothing was written.</value></data>
   <data name="Convert_LibrariesPlaced" xml:space="preserve"><value>System libraries: {0}</value></data>
@@ -86,6 +86,10 @@ Module folders: {1}</value></data>
   <data name="Problem_RelinkerMissing" xml:space="preserve"><value>The relinker was not found. Download AnyPS5, or check the path of your own build in Settings.</value></data>
   <data name="Problem_OutputInsideGame" xml:space="preserve"><value>The output folder cannot be the game folder or be inside it.</value></data>
   <data name="Problem_GameInsideOutput" xml:space="preserve"><value>The output folder cannot contain the game folder.</value></data>
+  <data name="Problem_EncryptedContainer" xml:space="preserve"><value>{0} is still encrypted: this dump was not decrypted. The app unwraps a SELF container, it does not decrypt one.</value></data>
+  <data name="Problem_CompressedContainer" xml:space="preserve"><value>{0} is a SELF container with compressed segments, which the app cannot unwrap yet.</value></data>
+  <data name="Problem_MalformedContainer" xml:space="preserve"><value>{0} looks like a SELF container, but what it holds does not add up, so it cannot be unwrapped.</value></data>
+  <data name="Stage_Unwrapping" xml:space="preserve"><value>Unwrapping the executable and its modules…</value></data>
   <data name="Stage_Relinking" xml:space="preserve"><value>Running the relinker…</value></data>
   <data name="Stage_Libraries" xml:space="preserve"><value>Placing the system libraries…</value></data>
   <data name="Stage_GameFiles" xml:space="preserve"><value>Placing the game files…</value></data>
