@@ -191,6 +191,10 @@ public partial class ComponentsViewModel : ObservableObject
         }
 
         var offer = ReleaseOffer.Create(official, other, prefer, latestOther);
+
+        // Emptying the list empties what the box shows: the selection has to change for the box to
+        // show it again, and a second check often comes back with the same release.
+        SelectedRelease = null;
         Releases.Clear();
         foreach (var release in offer.Releases) Releases.Add(release);
         SelectedRelease = offer.Default;
