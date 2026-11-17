@@ -3,12 +3,15 @@ namespace AnyPS5Gui.Core.Games;
 public enum ExecutableKind
 {
     Elf,
-    /// <summary>A SELF/fSELF container, which the relinker does not read.</summary>
+    /// <summary>A SELF/fSELF container, which the relinker does not read: it is unwrapped first.</summary>
     Self,
     Unknown,
 }
 
-/// <summary>Things worth telling the user before converting. Only <see cref="NoExecutable"/> prevents it.</summary>
+/// <summary>
+/// Things worth telling the user before converting. Only <see cref="NoExecutable"/> prevents it, and the
+/// two about containers are no trouble: the conversion unwraps them.
+/// </summary>
 public enum GameIssue
 {
     NoExecutable,
@@ -33,6 +36,9 @@ public sealed record GameInfo
     public IReadOnlyList<GameIssue> Issues { get; init; } = [];
 
     public bool CanConvert => Executable is not null;
+
+    /// <summary>The executable or some module is a SELF container, which the relinker cannot read as it is.</summary>
+    public bool NeedsUnwrapping => Kind == ExecutableKind.Self || WrappedModules > 0;
 
     public string DisplayName => Param?.TitleName ?? Path.GetFileName(Path.TrimEndingDirectorySeparator(Folder));
 }
@@ -121,10 +127,7 @@ public static class GameFolder
         }
 
         if (magic.SequenceEqual<byte>([0x7F, (byte)'E', (byte)'L', (byte)'F'])) return ExecutableKind.Elf;
-        // PS5 and PS4 SELF containers.
-        if (magic.SequenceEqual<byte>([0x54, 0x14, 0xF5, 0xEE]) || magic.SequenceEqual<byte>([0x4F, 0x15, 0x3D, 0x1D]))
-            return ExecutableKind.Self;
-        return ExecutableKind.Unknown;
+        return SelfContainer.IsContainer(magic) ? ExecutableKind.Self : ExecutableKind.Unknown;
     }
 
     private static string? FindExecutable(string folder)

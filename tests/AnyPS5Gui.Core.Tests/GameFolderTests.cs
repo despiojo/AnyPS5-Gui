@@ -38,6 +38,7 @@ public class GameFolderTests
         Assert.Equal(["sce_module"], game.ModuleDirectories);
         Assert.True(game.HasPatchFile);
         Assert.Empty(game.Issues);
+        Assert.False(game.NeedsUnwrapping);
     }
 
     [Fact]
@@ -54,6 +55,7 @@ public class GameFolderTests
         Assert.True(game.CanConvert);
         Assert.Equal(ExecutableKind.Self, game.Kind);
         Assert.Equal(1, game.WrappedModules);
+        Assert.True(game.NeedsUnwrapping);
         Assert.Equal([GameIssue.WrappedExecutable, GameIssue.WrappedModules], game.Issues);
     }
 
