@@ -8,12 +8,14 @@ public class ConversionTests
 {
     /// <summary>
     /// Stands in for the relinker: writes the output executable (its last argument) and a converted
-    /// module under app0/, as the real one does. "--dry-run" writes nothing and "--fail" exits with 2.
+    /// module under app0/, as the real one does, and says how long the input (the argument before it)
+    /// is. "--dry-run" writes nothing and "--fail" exits with 2.
     /// </summary>
     private const string FakeRelinker = """
         @echo off
         setlocal
         set "last="
+        set "prev="
         set "dry="
         :next
         if "%~1"=="" goto run
@@ -22,11 +24,13 @@ public class ConversionTests
           exit /b 2
         )
         if "%~1"=="--dry-run" set "dry=1"
+        set "prev=%last%"
         set "last=%~1"
         shift
         goto next
         :run
         echo Converting to %last%
+        for %%f in ("%prev%") do echo Read %%~zf bytes from %prev%
         if defined dry exit /b 0
         > "%last%" echo exe
         for %%f in ("%last%") do set "dir=%%~dpf"
@@ -75,6 +79,24 @@ public class ConversionTests
             return Converter.RunAsync(request, line => Add(Lines, line), line => Add(Errors, line), progress,
                 TestContext.Current.CancellationToken);
         }
+
+        /// <summary>The dump as it usually comes: executable and module as SELF containers, beside a module that is not one.</summary>
+        public void Wrap(ulong executable = FakeSelf.Plain, bool wrapExecutable = true)
+        {
+            if (wrapExecutable) Temp.WriteBytes(@"dump\My Game\eboot.bin", FakeSelf.Build(executable));
+            Temp.WriteBytes(@"dump\My Game\sce_module\libc.prx", FakeSelf.Build(version: true));
+            Temp.WriteBytes(@"dump\My Game\sce_module\plain.prx", [.. Magic.Elf, 1, 2, 3]);
+            foreach (var file in Directory.GetFiles(Game, "*", SearchOption.AllDirectories))
+                File.SetLastWriteTimeUtc(file, new DateTime(2021, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        }
+
+        /// <summary>Every file of the dump with its contents and its time, to tell whether a conversion touched it.</summary>
+        public Dictionary<string, string> Dump() =>
+            Directory.GetFiles(Game, "*", SearchOption.AllDirectories).ToDictionary(
+                file => Path.GetRelativePath(Game, file),
+                file => $"{Convert.ToHexString(File.ReadAllBytes(file))} {File.GetLastWriteTimeUtc(file):O} {File.GetAttributes(file)}");
+
+        public string App0(params string[] parts) => Path.Combine([Output, "app0", .. parts]);
 
         public void Dispose() => Temp.Dispose();
     }
@@ -174,6 +196,123 @@ public class ConversionTests
         Assert.Contains("--dry-run", result.Command);
         Assert.Null(result.GameFiles);
         Assert.False(Directory.Exists(fixture.Output));
+    }
+
+    [Fact]
+    public async Task A_wrapped_game_is_unwrapped_into_the_output_and_the_dump_is_left_alone()
+    {
+        using var fixture = new Fixture();
+        fixture.Wrap();
+        var dump = fixture.Dump();
+        var progress = new Collector();
+
+        var result = await fixture.Run(fixture.Request(), progress);
+
+        Assert.True(result.Succeeded);
+        // The relinker reads the unwrapped executable, and is told where the dump's patches are.
+        Assert.Equal(
+            ["--windows", "--patches", Path.Combine(fixture.Game, "relinker-patches.toml"),
+                fixture.App0("eboot.bin"), Path.Combine(fixture.Output, "PPSA01234.exe")],
+            result.Command);
+        Assert.Contains($"Read 520 bytes from {fixture.App0("eboot.bin")}", fixture.Lines.Select(line => line.Trim()));
+        Assert.Equal(ConversionStage.Unwrapping, progress.Reports[0].Stage);
+
+        // What the game runs with is the unwrapped files, not the containers placed over them afterwards.
+        Assert.Equal(Magic.Elf[..4], File.ReadAllBytes(fixture.App0("eboot.bin"))[..4]);
+        Assert.Equal(0x208, new FileInfo(fixture.App0("eboot.bin")).Length);
+        Assert.Equal(0x216, new FileInfo(fixture.App0("sce_module", "libc.prx")).Length);
+        Assert.Equal([.. Magic.Elf, 1, 2, 3], File.ReadAllBytes(fixture.App0("sce_module", "plain.prx")));
+        Assert.StartsWith("converted", File.ReadAllText(fixture.App0("sce_module", "libc.guest.prx")));
+        Assert.Equal("map", File.ReadAllText(fixture.App0("data", "level 1", "map.bin")));
+        Assert.Empty(Directory.GetFiles(fixture.Output, "*.part", SearchOption.AllDirectories));
+
+        Assert.Equal(dump, fixture.Dump());
+
+        // Converting again does the same over what is there.
+        Assert.True((await fixture.Run(fixture.Request())).Succeeded);
+        Assert.Equal(0x208, new FileInfo(fixture.App0("eboot.bin")).Length);
+        Assert.Equal(dump, fixture.Dump());
+
+        // Patches switched off stay off.
+        var withoutPatches = Converter.BuildArguments(fixture.Request(new RelinkerOptions { PatchMode = PatchMode.None }));
+        Assert.Contains("--no-patches", withoutPatches);
+        Assert.DoesNotContain("--patches", withoutPatches);
+    }
+
+    [Fact]
+    public async Task A_module_linked_to_the_dump_by_an_earlier_conversion_is_replaced_and_not_written_through()
+    {
+        using var fixture = new Fixture();
+        fixture.Wrap(wrapExecutable: false);
+        // As a conversion from before containers were unwrapped left it: the dump's own file under a second name.
+        Directory.CreateDirectory(fixture.App0("sce_module"));
+        Assert.True(FileLinker.TryCreateHardLink(fixture.App0("sce_module", "libc.prx"),
+            Path.Combine(fixture.Game, "sce_module", "libc.prx")));
+        var dump = fixture.Dump();
+
+        var result = await fixture.Run(fixture.Request());
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(fixture.App0("eboot.bin"), result.Command[^2]);
+        Assert.Equal(0x216, new FileInfo(fixture.App0("sce_module", "libc.prx")).Length);
+        Assert.Equal(dump, fixture.Dump());
+    }
+
+    [Fact]
+    public async Task A_relinker_that_fails_on_a_wrapped_game_leaves_only_what_was_unwrapped()
+    {
+        using var fixture = new Fixture();
+        fixture.Wrap();
+        var dump = fixture.Dump();
+
+        var result = await fixture.Run(fixture.Request(new RelinkerOptions { ExtraArguments = "--fail" }));
+
+        Assert.Equal(2, result.ExitCode);
+        Assert.Null(result.GameFiles);
+        // The relinker had to be given something to read: that stays, and the rest of the game is not placed.
+        Assert.Equal(
+            ["eboot.bin", @"sce_module\libc.prx", @"sce_module\plain.prx"],
+            Directory.GetFiles(fixture.App0(), "*", SearchOption.AllDirectories)
+                .Select(file => Path.GetRelativePath(fixture.App0(), file)).Order());
+        Assert.False(Directory.Exists(Path.Combine(fixture.Output, "libs")));
+        Assert.Equal(dump, fixture.Dump());
+    }
+
+    [Fact]
+    public async Task A_dry_run_of_a_wrapped_game_writes_nothing_and_leaves_no_copy_behind()
+    {
+        using var fixture = new Fixture();
+        fixture.Wrap();
+        var dump = fixture.Dump();
+
+        var result = await fixture.Run(fixture.Request(new RelinkerOptions { DryRun = true }));
+
+        Assert.True(result.Succeeded);
+        Assert.False(Directory.Exists(fixture.Output));
+        Assert.Equal(dump, fixture.Dump());
+
+        // It read an unwrapped copy from somewhere that is neither the dump nor the output, and that is gone.
+        var input = result.Command[^2];
+        Assert.Contains($"Read 520 bytes from {input}", fixture.Lines.Select(line => line.Trim()));
+        Assert.False(Converter.IsSameOrInside(input, fixture.Temp.Path));
+        Assert.False(Directory.Exists(Path.GetDirectoryName(input)));
+    }
+
+    [Fact]
+    public async Task A_container_that_cannot_be_unwrapped_stops_the_conversion_before_the_relinker()
+    {
+        using var fixture = new Fixture();
+        fixture.Wrap(FakeSelf.Encrypted);
+        var dump = fixture.Dump();
+
+        var failure = await Assert.ThrowsAsync<ConversionException>(() => fixture.Run(fixture.Request()));
+
+        Assert.Equal(ConversionProblem.EncryptedContainer, failure.Problem);
+        Assert.Equal("eboot.bin", failure.Detail);
+        Assert.Empty(fixture.Lines);
+        Assert.False(File.Exists(Path.Combine(fixture.Output, "PPSA01234.exe")));
+        Assert.False(File.Exists(fixture.App0("eboot.bin")));
+        Assert.Equal(dump, fixture.Dump());
     }
 
     [Fact]
