@@ -2,6 +2,8 @@ using System.Runtime.InteropServices;
 
 namespace AnyPS5Gui.Core.Conversion;
 
+public enum Placement { Linked, Copied, Skipped }
+
 public sealed record MirrorResult(int Linked, int Copied, int Skipped)
 {
     public int Total => Linked + Copied + Skipped;
@@ -46,34 +48,21 @@ public static class FileLinker
             var from = Path.Combine(source, relative);
             var to = Path.Combine(destination, relative);
 
-            var existing = new FileInfo(to);
-            if (existing.Exists && (IsUpToDate(existing, new FileInfo(from)) ||
-                                    existing.LastWriteTimeUtc >= keepNewerThanUtc))
-            {
-                skipped++;
-            }
-            else
-            {
-                if (existing.Exists)
-                {
-                    // A stale link shares its attributes with a file nothing else here uses any more.
-                    existing.IsReadOnly = false;
-                    existing.Delete();
-                }
+            var directory = Path.GetDirectoryName(to)!;
+            if (createdDirectories.Add(directory)) Directory.CreateDirectory(directory);
 
-                var directory = Path.GetDirectoryName(to)!;
-                if (createdDirectories.Add(directory)) Directory.CreateDirectory(directory);
-
-                if (preferLinks && TryCreateHardLink(to, from))
-                {
+            switch (PlaceInExistingDirectory(from, to, preferLinks, keepNewerThanUtc))
+            {
+                case Placement.Linked:
                     linked++;
-                }
-                else
-                {
+                    break;
+                case Placement.Copied:
                     preferLinks = false;
-                    File.Copy(from, to);
                     copied++;
-                }
+                    break;
+                default:
+                    skipped++;
+                    break;
             }
 
             done++;
@@ -81,6 +70,34 @@ public static class FileLinker
         }
 
         return new MirrorResult(linked, copied, skipped);
+    }
+
+    /// <summary>
+    /// One file of a mirror, by the same rules, creating its folder. A caller placing several stops
+    /// asking for links once one comes back copied.
+    /// </summary>
+    public static Placement Place(string from, string to, bool preferLinks, DateTime? keepNewerThanUtc = null)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(to))!);
+        return PlaceInExistingDirectory(from, to, preferLinks, keepNewerThanUtc);
+    }
+
+    private static Placement PlaceInExistingDirectory(string from, string to, bool preferLinks, DateTime? keepNewerThanUtc)
+    {
+        var existing = new FileInfo(to);
+        if (existing.Exists)
+        {
+            if (IsUpToDate(existing, new FileInfo(from)) || existing.LastWriteTimeUtc >= keepNewerThanUtc)
+                return Placement.Skipped;
+
+            // A stale link shares its attributes with a file nothing else here uses any more.
+            existing.IsReadOnly = false;
+            existing.Delete();
+        }
+
+        if (preferLinks && TryCreateHardLink(to, from)) return Placement.Linked;
+        File.Copy(from, to);
+        return Placement.Copied;
     }
 
     // Two seconds is the coarsest time stamp a Windows file system keeps (FAT), so a copy on one still matches.

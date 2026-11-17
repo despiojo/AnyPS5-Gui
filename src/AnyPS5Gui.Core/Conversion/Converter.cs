@@ -18,7 +18,7 @@ public sealed record ConversionRequest
     public string OutputExecutable => Path.Combine(OutputDirectory, ExecutableName);
 }
 
-public enum ConversionStage { Relinking, Libraries, GameFiles }
+public enum ConversionStage { Unwrapping, Relinking, Libraries, GameFiles }
 
 public sealed record ConversionProgress(ConversionStage Stage, int Done = 0, int Total = 0);
 
@@ -28,12 +28,19 @@ public enum ConversionProblem
     RelinkerMissing,
     OutputInsideGame,
     GameInsideOutput,
+    /// <summary>A SELF container of the game is still encrypted. <see cref="ConversionException.Detail"/> names it.</summary>
+    EncryptedContainer,
+    CompressedContainer,
+    MalformedContainer,
 }
 
 /// <summary>A request that cannot be started. The relinker's own failures are reported through the exit code instead.</summary>
-public sealed class ConversionException(ConversionProblem problem) : Exception(problem.ToString())
+public sealed class ConversionException(ConversionProblem problem, string? detail = null) : Exception(problem.ToString())
 {
     public ConversionProblem Problem { get; } = problem;
+
+    /// <summary>The file the problem is about, for the problems that are about one.</summary>
+    public string? Detail { get; } = detail;
 }
 
 public sealed record ConversionResult(int ExitCode, IReadOnlyList<string> Command)
@@ -51,13 +58,37 @@ public sealed record ConversionResult(int ExitCode, IReadOnlyList<string> Comman
 ///     libs/         AnyPS5 system libraries
 ///     app0/         the game's own files, plus the modules the relinker converted
 /// </code>
+/// A dump usually comes with its executable and modules as SELF containers, which the relinker does not
+/// read. Those are unwrapped first, straight into <c>app0/</c>, where they are what the game is left
+/// with instead of the containers, and the relinker is pointed there. The dump is only ever read. A dry
+/// run, which may not write to the output, unwraps into a temporary folder that it removes afterwards.
 /// </summary>
 public static class Converter
 {
-    public static List<string> BuildArguments(ConversionRequest request) =>
-        RelinkerCommand.Build(request.Options,
-            request.Game.Executable ?? throw new ConversionException(ConversionProblem.NoExecutable),
-            Path.GetFullPath(request.OutputExecutable));
+    public static List<string> BuildArguments(ConversionRequest request)
+    {
+        var executable = request.Game.Executable ?? throw new ConversionException(ConversionProblem.NoExecutable);
+        if (UnwrapDirectory(request) is not { } unwrapped)
+            return RelinkerCommand.Build(request.Options, executable, Path.GetFullPath(request.OutputExecutable));
+
+        // The relinker looks for the patch file beside its input, which is no longer where the game is.
+        var patches = Path.Combine(request.Game.Folder, GameFolder.PatchFileName);
+        return RelinkerCommand.Build(request.Options, Path.Combine(unwrapped, Path.GetFileName(executable)),
+            Path.GetFullPath(request.OutputExecutable), request.Game.HasPatchFile ? patches : null);
+    }
+
+    /// <summary>
+    /// Where the executable and the modules of a game that comes in containers are unwrapped, and read
+    /// by the relinker: <c>app0/</c> of the output, or a temporary folder for a dry run. Nothing for a
+    /// game that needs no unwrapping.
+    /// </summary>
+    public static string? UnwrapDirectory(ConversionRequest request)
+    {
+        if (!request.Game.NeedsUnwrapping) return null;
+        return request.Options.DryRun
+            ? Path.Combine(Path.GetTempPath(), "AnyPS5Gui-dry-run-" + Path.GetFileNameWithoutExtension(request.ExecutableName))
+            : Path.Combine(Path.GetFullPath(request.OutputDirectory), "app0");
+    }
 
     public static async Task<ConversionResult> RunAsync(ConversionRequest request, Action<string> onOutput,
         Action<string> onError, IProgress<ConversionProgress>? progress = null,
@@ -77,10 +108,29 @@ public static class Converter
         var started = DateTime.UtcNow - TimeSpan.FromSeconds(3);
         if (!dryRun) Directory.CreateDirectory(output);
 
-        progress?.Report(new ConversionProgress(ConversionStage.Relinking));
-        var exitCode = await ProcessRunner.RunAsync(
-            new ProcessSpec(request.RelinkerPath, arguments) { WorkingDirectory = game },
-            onOutput, onError, cancellationToken).ConfigureAwait(false);
+        int exitCode;
+        var unwrapped = UnwrapDirectory(request);
+        try
+        {
+            if (unwrapped is not null)
+            {
+                progress?.Report(new ConversionProgress(ConversionStage.Unwrapping));
+                // What an interrupted dry run left is not this dump.
+                if (dryRun) DeleteCopies(unwrapped);
+                // A dry run's copy is thrown away, so nothing in it may be a link to the dump.
+                await Task.Run(() => Unwrap(request.Game, unwrapped, request.LinkFiles && !dryRun, cancellationToken),
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            progress?.Report(new ConversionProgress(ConversionStage.Relinking));
+            exitCode = await ProcessRunner.RunAsync(
+                new ProcessSpec(request.RelinkerPath, arguments) { WorkingDirectory = game },
+                onOutput, onError, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (unwrapped is not null && dryRun) DeleteCopies(unwrapped);
+        }
 
         var result = new ConversionResult(exitCode, arguments);
         if (exitCode != 0 || dryRun) return result;
@@ -102,6 +152,50 @@ public static class Converter
 
             return result with { Libraries = libraries, GameFiles = gameFiles };
         }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Lays out the executable and the files directly inside the module folders, which are the ones the
+    /// relinker reads, as they are in the game: a container as the ELF it holds, anything else as it is.
+    /// </summary>
+    private static void Unwrap(GameInfo game, string destination, bool preferLinks, CancellationToken cancellationToken)
+    {
+        var files = game.ModuleDirectories
+            .SelectMany(name => Directory.EnumerateFiles(Path.Combine(game.Folder, name)))
+            .Prepend(game.Executable!);
+        foreach (var file in files)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var to = Path.Combine(destination, Path.GetRelativePath(game.Folder, file));
+            if (GameFolder.Identify(file) != ExecutableKind.Self)
+            {
+                if (FileLinker.Place(file, to, preferLinks) == Placement.Copied) preferLinks = false;
+                continue;
+            }
+
+            try
+            {
+                SelfContainer.Unwrap(file, to, cancellationToken);
+            }
+            catch (SelfException e)
+            {
+                throw new ConversionException(e.Problem switch
+                {
+                    SelfProblem.Encrypted => ConversionProblem.EncryptedContainer,
+                    SelfProblem.Compressed => ConversionProblem.CompressedContainer,
+                    _ => ConversionProblem.MalformedContainer,
+                }, Path.GetRelativePath(game.Folder, file));
+            }
+        }
+    }
+
+    /// <summary>Removes a folder of copies. A copy keeps the read-only mark of its original, which would keep it there.</summary>
+    private static void DeleteCopies(string directory)
+    {
+        if (!Directory.Exists(directory)) return;
+        foreach (var file in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+            File.SetAttributes(file, FileAttributes.Normal);
+        Directory.Delete(directory, recursive: true);
     }
 
     public static bool IsSameOrInside(string path, string container)

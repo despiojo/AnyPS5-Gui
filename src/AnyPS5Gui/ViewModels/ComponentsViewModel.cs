@@ -110,17 +110,18 @@ public partial class ComponentsViewModel : ObservableObject
         await RunAsync(LoadReleasesAsync);
     }
 
-    /// <summary>Downloads the selected release, or the newest one when none has been chosen.</summary>
+    /// <summary>Downloads the selected release, or the one a check for versions would select when none has been chosen.</summary>
     [RelayCommand(CanExecute = nameof(IsIdle))]
     private async Task InstallAsync()
     {
         await RunAsync(async cancellation =>
         {
-            if (Releases.Count == 0) await LoadReleasesAsync(cancellation);
-            var release = SelectedRelease ?? Releases.FirstOrDefault();
-            if (release is null)
+            if (SelectedRelease is null) await LoadReleasesAsync(cancellation);
+            if (SelectedRelease is not { } release)
             {
-                Error = Loc.Get("Components_NoRelease");
+                // Whatever the check found wrong says more than "nothing found".
+                if (!HasError) Error = Loc.Get("Components_NoRelease");
+                Status = "";
                 return;
             }
 
@@ -160,13 +161,16 @@ public partial class ComponentsViewModel : ObservableObject
     {
         Status = Loc.Get("Components_Checking");
         IsIndeterminate = true;
-        var releases = (await _client.GetReleasesAsync(cancellationToken: cancellation)).ToList();
+        var official = await _client.GetReleasesAsync(cancellationToken: cancellation);
 
-        // AnyPS5's own releases stay first, so "the newest" is never a build from elsewhere.
+        IReadOnlyList<ReleaseInfo> other = [];
+        ReleaseInfo? latestOther = null;
+        var prefer = false;
         string? sourceError = null;
         if (App.Settings.ExtraReleaseSource is { Length: > 0 } source &&
             !source.Equals(ReleaseClient.Repository, StringComparison.OrdinalIgnoreCase))
         {
+            prefer = App.Settings.PreferExtraReleaseSource;
             if (!ReleaseClient.IsValidRepository(source))
             {
                 sourceError = Loc.Format("Components_BadSource", source);
@@ -176,7 +180,8 @@ public partial class ComponentsViewModel : ObservableObject
                 // The source failing, or not answering in time, leaves AnyPS5's own releases to choose from.
                 try
                 {
-                    releases.AddRange(await _client.GetReleasesAsync(source, cancellation));
+                    other = await _client.GetReleasesAsync(source, cancellation);
+                    if (prefer) latestOther = await _client.GetLatestReleaseAsync(source, cancellation);
                 }
                 catch (HttpRequestException e)
                 {
@@ -185,12 +190,21 @@ public partial class ComponentsViewModel : ObservableObject
             }
         }
 
+        var offer = ReleaseOffer.Create(official, other, prefer, latestOther);
+
+        // Emptying the list empties what the box shows: the selection has to change for the box to
+        // show it again, and a second check often comes back with the same release.
+        SelectedRelease = null;
         Releases.Clear();
-        foreach (var release in releases.Where(release => release.IsComplete)) Releases.Add(release);
-        SelectedRelease = Releases.FirstOrDefault();
-        Status = SelectedRelease is { } latest
+        foreach (var release in offer.Releases) Releases.Add(release);
+        SelectedRelease = offer.Default;
+
+        // A preferred source with no latest release to take leaves the choice to the list: a download
+        // takes none on its own, not even AnyPS5's newest, which is not what was asked for.
+        if (prefer && offer.Default is null) sourceError ??= Loc.Format("Components_NoLatest", App.Settings.ExtraReleaseSource);
+        Status = offer.Default is { } latest
             ? Loc.Format(App.Components.IsInstalled(latest.VersionName) ? "Components_UpToDate" : "Components_Available", latest.Label)
-            : Loc.Get("Components_NoRelease");
+            : prefer ? "" : Loc.Get("Components_NoRelease");
         if (sourceError is not null) Error = sourceError;
     }
 

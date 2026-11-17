@@ -5,7 +5,11 @@ namespace AnyPS5Gui.Core.Relinker;
 /// <summary>Turns <see cref="RelinkerOptions"/> into the relinker's argument list.</summary>
 public static class RelinkerCommand
 {
-    public static List<string> Build(RelinkerOptions options, string input, string output)
+    /// <param name="patchFile">
+    /// The patch file to name when the options leave finding it to the relinker, which looks beside the
+    /// input: for an input that is not where the game is.
+    /// </param>
+    public static List<string> Build(RelinkerOptions options, string input, string output, string? patchFile = null)
     {
         // The format defaults to Linux whatever the output is called: ".exe" alone does not select Windows.
         var arguments = new List<string> { "--windows" };
@@ -30,6 +34,9 @@ public static class RelinkerCommand
 
         switch (options.PatchMode)
         {
+            case PatchMode.Auto:
+                AddValue(arguments, "--patches", patchFile);
+                break;
             case PatchMode.None:
                 arguments.Add("--no-patches");
                 break;

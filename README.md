@@ -9,11 +9,11 @@ AnyPS5 does the work. This app downloads it, runs it and puts the files where it
 ## What it does
 
 - **Downloads AnyPS5** (the relinker and the Windows system libraries) from its GitHub releases, checks the download against the checksum GitHub lists, and lets you switch between versions.
-- **Converts a game**: runs the relinker, then builds the layout a converted game needs, with `libs/` and `app0/` beside the executable.
+- **Converts a game**: unwraps the executable and the modules when the dump has them as SELF containers, runs the relinker, then builds the layout a converted game needs, with `libs/` and `app0/` beside the executable.
 - **Launches it** with the settings you choose (fullscreen, FSR, frame rate limit, GPU, language, volume and more) and shows what the game prints.
-- **Checks the game first** and tells you in plain words when the executable is still wrapped or encrypted, or the module folder is missing.
+- **Checks the game first** and tells you in plain words when there is no executable it can convert or the module folder is missing.
 
-It does not extract or decrypt anything. You need a game that is already dumped and decrypted, as AnyPS5 itself does.
+It does not dump or decrypt anything. You need a game that is already dumped and decrypted, as AnyPS5 itself does.
 
 ![The Games page](docs/screenshots/games.png)
 
@@ -57,11 +57,13 @@ Launch settings are AnyPS5's environment variables. The Games page has controls 
 
 ### Good to know
 
+- A dump usually has its executable and modules as SELF containers, which the relinker does not read. The app unwraps them into `app0` of the output before converting, so you point it at the dump as it is, and the dump is never changed. A container that is still encrypted is refused: nothing is decrypted.
 - Closing the app stops a running game or conversion: the app reads their output through pipes that end with it.
 - Every conversion, dry run and game run writes all of its output to a text file in the `logs` folder of the app's data, named after the time and the game. The window lists only the newest lines; the file has all of them and can be read while the game is running. The button beside the log opens it. The ten newest files are kept, a number you can change in **Settings**.
 - Keyboard, mouse and controller mapping is AnyPS5's `anyps5-input.ini`, placed beside the converted executable. See its [input mapping guide](https://github.com/boykopovar/AnyPS5/blob/main/docs/user/INPUT_MAPPING.md).
 - If you build AnyPS5 yourself, point **Settings** to your relinker and libraries folder and they are used instead of the downloaded ones.
 - **Settings** also takes the name of another GitHub repository, such as a fork that publishes builds with changes AnyPS5 has not released yet. Its releases are then listed with AnyPS5's own, with the repository's name beside them, and are downloaded the same way if they carry `relinker-<tag>.exe` and `prx-windows-<tag>.zip`. A build from another repository is kept apart from AnyPS5's own, even when both carry the same version name. AnyPS5 does not review or support such builds: add only a repository you trust.
+- **Download** takes AnyPS5's newest release unless you choose another from the list. Tick the box under that repository's name and it takes the release the repository marks as its latest instead, so a fork that publishes a build every day is followed without choosing each time.
 - The app is in English and Spanish, and follows Windows unless you choose a language in **Settings**.
 
 ### Where things are kept
@@ -72,7 +74,7 @@ Settings, the game list, the downloaded AnyPS5 versions and the logs live in `%L
 
 A converted game is an ordinary Windows program. It runs with your account's permissions and has none of the console's sandbox. Convert and run only games you own and trust.
 
-The app makes network requests only to GitHub, and only when you press **Download** or **Check for versions**: the release list of AnyPS5, that of the other repository if you added one in **Settings**, and the two files of the release you chose.
+The app makes network requests only to GitHub, and only when you press **Download** or **Check for versions**: the release list of AnyPS5, that of the other repository if you added one in **Settings** and, if you ticked the box under it, its latest release, and the two files of the release you chose.
 
 ## Build
 
