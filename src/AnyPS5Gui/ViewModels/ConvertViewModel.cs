@@ -261,7 +261,16 @@ public partial class ConvertViewModel : ObservableObject
         CommunityStatus = Loc.Get("Convert_CommunityChecking");
         try
         {
-            var report = await _community.LookupGameAsync(game.Param?.TitleId, game.DisplayName);
+            CommunityReport report;
+            try
+            {
+                report = await _community.LookupGameAsync(game.Param?.TitleId, game.DisplayName);
+            }
+            catch (HttpRequestException) when (!ReferenceEquals(Game, game))
+            {
+                return;
+            }
+            if (!ReferenceEquals(Game, game)) return;
             if (report.Discussions.FirstOrDefault() is { } discussion)
             {
                 DiscussionUri = new Uri(discussion.Url);
