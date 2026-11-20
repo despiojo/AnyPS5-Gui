@@ -129,6 +129,37 @@ public class ComponentTests
     }
 
     [Fact]
+    public void Multiple_release_sources_are_split_and_deduplicated_without_official_repository()
+    {
+        Assert.Equal(
+            ["Izamaru/AnyPS5-Yotei", "simnJS/AnyPS5"],
+            ReleaseClient.SplitRepositories("Izamaru/AnyPS5-Yotei, boykopovar/AnyPS5; simnJS/AnyPS5\nIzamaru/AnyPS5-Yotei"));
+
+        var list = ReleaseClient.AddRepository("Izamaru/AnyPS5-Yotei", "simnJS/AnyPS5");
+        Assert.Equal("Izamaru/AnyPS5-Yotei, simnJS/AnyPS5", list);
+        Assert.Equal(list, ReleaseClient.AddRepository(list, "izamaru/anyps5-yotei"));
+    }
+
+    [Fact]
+    public void Resolve_can_target_a_specific_installed_version_for_a_game()
+    {
+        using var temp = new TempDirectory();
+        foreach (var version in new[] { "v0.1.5", "vmain-a72186d@Izamaru~AnyPS5-Yotei" })
+        {
+            temp.Write(Path.Combine("components", version, "relinker.exe"));
+            temp.Write(Path.Combine("components", version, "libs", "libc.prx"));
+        }
+        var store = new ComponentStore(temp.Combine("components"));
+        var settings = new AppSettings { ActiveVersion = "v0.1.5" };
+
+        Assert.Equal("vmain-a72186d@Izamaru~AnyPS5-Yotei",
+            store.Resolve(settings, "vmain-a72186d@Izamaru~AnyPS5-Yotei").Version);
+        Assert.Equal("Izamaru/AnyPS5-Yotei",
+            ComponentStore.RepositoryOf("vmain-a72186d@Izamaru~AnyPS5-Yotei"));
+        Assert.Equal(ReleaseClient.Repository, ComponentStore.RepositoryOf("v0.1.5"));
+    }
+
+    [Fact]
     public async Task A_release_list_that_never_arrives_is_a_failed_request_and_not_a_cancellation()
     {
         using var http = new HttpClient(new NoAnswer());

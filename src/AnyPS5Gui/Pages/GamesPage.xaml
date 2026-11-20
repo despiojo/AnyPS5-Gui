@@ -4,7 +4,12 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:AnyPS5Gui.Controls"
+    xmlns:local="using:AnyPS5Gui"
     xmlns:vm="using:AnyPS5Gui.ViewModels">
+
+    <Page.Resources>
+        <local:VersionLabelConverter x:Key="VersionLabel" />
+    </Page.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -81,8 +86,26 @@
                                 <Button x:Uid="Games_Launch" Style="{StaticResource AccentButtonStyle}" MinWidth="110"
                                         Command="{x:Bind ViewModel.Selected.LaunchCommand, Mode=OneWay}" />
                                 <Button x:Uid="Games_Stop" Command="{x:Bind ViewModel.Selected.StopCommand, Mode=OneWay}" />
+                                <Button x:Uid="Games_Reconvert" Command="{x:Bind ViewModel.Selected.ReconvertCommand, Mode=OneWay}" />
                                 <Button x:Uid="Games_OpenFolder" Command="{x:Bind ViewModel.Selected.OpenFolderCommand, Mode=OneWay}" />
                                 <Button x:Uid="Games_Remove" Command="{x:Bind ViewModel.RemoveCommand}" />
+                                <HyperlinkButton x:Uid="Games_DiscussionLink"
+                                                 NavigateUri="{x:Bind ViewModel.Selected.DiscussionUri, Mode=OneWay}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0"
+                                        Visibility="{x:Bind ViewModel.Components.HasInstalled, Mode=OneWay}">
+                                <ComboBox x:Name="LibraryVersionBox" x:Uid="Games_LibraryVersion" MinWidth="220"
+                                          SelectionChanged="OnLibraryVersionSelected"
+                                          ItemsSource="{x:Bind ViewModel.Components.Installed}"
+                                          SelectedItem="{x:Bind ViewModel.Selected.SelectedLibraryVersion, Mode=OneWay}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <TextBlock Text="{x:Bind Converter={StaticResource VersionLabel}}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <Button x:Uid="Games_SwitchLibs" VerticalAlignment="Bottom"
+                                        Command="{x:Bind ViewModel.Selected.SwitchLibrariesCommand, Mode=OneWay}" />
                             </StackPanel>
                         </StackPanel>
                     </Grid>

@@ -33,6 +33,36 @@ public sealed partial class ReleaseClient(HttpClient http)
     public static bool IsValidRepository(string? repository) =>
         repository is not null && RepositoryPattern().IsMatch(repository) && !repository.Contains("..");
 
+    /// <summary>
+    /// Splits a setting string into individual repository names (separated by commas, semicolons, lines
+    /// or spaces), leaving out AnyPS5's own repository and duplicates.
+    /// </summary>
+    public static IReadOnlyList<string> SplitRepositories(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return [];
+        var result = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { Repository };
+        foreach (var part in text.Split([',', ';', '\r', '\n', ' ', '\t'],
+                     StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var clean = part.Trim('"');
+            if (clean.Length > 0 && seen.Add(clean)) result.Add(clean);
+        }
+        return result;
+    }
+
+    /// <summary>Adds <paramref name="repository"/> to a setting string when it is not already listed.</summary>
+    public static string AddRepository(string? existing, string repository)
+    {
+        var list = SplitRepositories(existing).ToList();
+        if (!repository.Equals(Repository, StringComparison.OrdinalIgnoreCase) &&
+            !list.Any(item => item.Equals(repository, StringComparison.OrdinalIgnoreCase)))
+        {
+            list.Add(repository);
+        }
+        return string.Join(", ", list);
+    }
+
     /// <summary>GitHub rejects requests without a user agent. The name identifies the app, not the user.</summary>
     public static HttpClient CreateHttpClient()
     {

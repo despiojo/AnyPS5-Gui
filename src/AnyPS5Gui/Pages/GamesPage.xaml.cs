@@ -20,4 +20,10 @@ public sealed partial class GamesPage : Page
     {
         if (GameList.SelectedItem is GameItemViewModel game) ViewModel.Selected = game;
     }
+
+    private void OnLibraryVersionSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (ViewModel.Selected is { } game && LibraryVersionBox.SelectedItem is string version)
+            game.SelectedLibraryVersion = version;
+    }
 }

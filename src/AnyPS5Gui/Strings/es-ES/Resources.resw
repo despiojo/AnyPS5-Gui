@@ -29,6 +29,11 @@
   <data name="Convert_GamePath.PlaceholderText" xml:space="preserve"><value>La carpeta que contiene eboot.bin. También puedes soltarla en esta página</value></data>
   <data name="Convert_BrowseFolder.Content" xml:space="preserve"><value>Carpeta…</value></data>
   <data name="Convert_BrowseFile.Content" xml:space="preserve"><value>Archivo…</value></data>
+  <data name="Convert_CheckCommunity.Content" xml:space="preserve"><value>Consultar la comunidad</value></data>
+  <data name="Convert_DiscussionLink.Content" xml:space="preserve"><value>Hilo del juego en GitHub</value></data>
+  <data name="Convert_UseFork.Content" xml:space="preserve"><value>Usar fork</value></data>
+  <data name="Convert_OpenFork.Content" xml:space="preserve"><value>GitHub</value></data>
+  <data name="Convert_Version.Header" xml:space="preserve"><value>Versión de AnyPS5</value></data>
   <data name="Convert_Output.Header" xml:space="preserve"><value>Carpeta de salida</value></data>
   <data name="Convert_LinkFiles.Content" xml:space="preserve"><value>Enlazar los archivos del juego en vez de copiarlos</value></data>
   <data name="Convert_LinkFilesHelp.Text" xml:space="preserve"><value>Es instantáneo y no ocupa más espacio, pero la salida tiene que estar en la misma unidad NTFS que el juego; si no, los archivos se copian. Un archivo enlazado es el mismo archivo del volcado con un segundo nombre: no lo modifiques.</value></data>
@@ -68,6 +73,13 @@
   <data name="Convert_GameDetails" xml:space="preserve"><value>Ejecutable: {0}
 Carpetas de módulos: {1}</value></data>
   <data name="Convert_PatchFileFound" xml:space="preserve"><value>Esta carpeta trae un relinker-patches.toml. Se aplica salvo que elijas otra cosa en Opciones avanzadas.</value></data>
+  <data name="Convert_AdviceGhostOfYotei" xml:space="preserve"><value>Las pruebas de la comunidad para Ghost of Yōtei (PPSA26344) usan los forks de Yōtei y AnyKyty (Hilo #675), con mimalloc activado al arrancar.</value></data>
+  <data name="Convert_CommunityChecking" xml:space="preserve"><value>Consultando los hilos y forks de la comunidad en GitHub…</value></data>
+  <data name="Convert_CommunityDiscussionStatus" xml:space="preserve"><value>Hilo: {0} — Estado: {1} ({2} comentarios)</value></data>
+  <data name="Convert_CommunityDiscussionFound" xml:space="preserve"><value>Hilo: {0} ({1} comentarios)</value></data>
+  <data name="Convert_CommunityForksFound" xml:space="preserve"><value>Se han encontrado {0} fork(s) de la comunidad en GitHub.</value></data>
+  <data name="Convert_CommunityNothingFound" xml:space="preserve"><value>Todavía no se ha encontrado ningún hilo ni fork para este juego en GitHub.</value></data>
+  <data name="Convert_UsingFork" xml:space="preserve"><value>Se ha elegido AnyPS5 {0} para este juego.</value></data>
   <data name="Issue_NoExecutable" xml:space="preserve"><value>Aquí no hay ningún eboot.bin. Elige la carpeta de un juego extraído, o su ejecutable con «Archivo…».</value></data>
   <data name="Issue_WrappedExecutable" xml:space="preserve"><value>El juego viene en contenedores SELF, como suele venir un volcado. Se desenvuelven en la carpeta de salida antes de convertir; el volcado no se modifica.</value></data>
   <data name="Issue_NotAnElf" xml:space="preserve"><value>El ejecutable no es un archivo ELF. Puede que siga cifrado.</value></data>
@@ -100,8 +112,12 @@ Carpetas de módulos: {1}</value></data>
   <data name="Games_AddExisting.Content" xml:space="preserve"><value>Añadir un juego convertido…</value></data>
   <data name="Games_Launch.Content" xml:space="preserve"><value>Jugar</value></data>
   <data name="Games_Stop.Content" xml:space="preserve"><value>Detener</value></data>
+  <data name="Games_Reconvert.Content" xml:space="preserve"><value>Volver a convertir</value></data>
   <data name="Games_OpenFolder.Content" xml:space="preserve"><value>Abrir carpeta</value></data>
   <data name="Games_Remove.Content" xml:space="preserve"><value>Quitar de la lista</value></data>
+  <data name="Games_DiscussionLink.Content" xml:space="preserve"><value>Hilo de la comunidad</value></data>
+  <data name="Games_LibraryVersion.Header" xml:space="preserve"><value>Bibliotecas del sistema (libs/)</value></data>
+  <data name="Games_SwitchLibs.Content" xml:space="preserve"><value>Aplicar bibliotecas</value></data>
   <data name="Games_Display.Header" xml:space="preserve"><value>Pantalla</value></data>
   <data name="Games_Fullscreen.Header" xml:space="preserve"><value>Arrancar a pantalla completa</value></data>
   <data name="Games_Fullscreen.OnContent" xml:space="preserve"><value>Sí</value></data>
@@ -144,6 +160,7 @@ Carpetas de módulos: {1}</value></data>
   <data name="Games_ExecutableMissing" xml:space="preserve"><value>{0} ya no existe. Vuelve a convertir el juego o quítalo de la lista.</value></data>
   <data name="Games_Exited" xml:space="preserve"><value>El juego ha terminado con el código de salida {0} ({1}).</value></data>
   <data name="Games_Stopped" xml:space="preserve"><value>Detenido.</value></data>
+  <data name="Games_LibsSwitched" xml:space="preserve"><value>Las bibliotecas del sistema han pasado a ser las de AnyPS5 {0}.</value></data>
 
   <!-- Settings page -->
   <data name="Settings_Title.Text" xml:space="preserve"><value>Configuración</value></data>
@@ -157,8 +174,13 @@ Carpetas de módulos: {1}</value></data>
   <data name="Settings_Install.Content" xml:space="preserve"><value>Descargar</value></data>
   <data name="Settings_SourceHeader.Text" xml:space="preserve"><value>Compilaciones de otro repositorio</value></data>
   <data name="Settings_SourceHelp.Text" xml:space="preserve"><value>Las versiones publicadas en otro repositorio de GitHub se listan junto a las de AnyPS5, con su nombre al lado: por ejemplo, un fork que publica compilaciones con cambios que AnyPS5 aún no ha publicado. AnyPS5 no las revisa ni les da soporte; añade solo un repositorio de confianza.</value></data>
-  <data name="Settings_ExtraSource.Header" xml:space="preserve"><value>Repositorio de GitHub (usuario/nombre)</value></data>
+  <data name="Settings_ExtraSource.Header" xml:space="preserve"><value>Repositorios de GitHub (usuario/nombre, separados por comas)</value></data>
   <data name="Settings_ExtraSource.PlaceholderText" xml:space="preserve"><value>Vacío: solo las versiones de AnyPS5</value></data>
+  <data name="Settings_KnownForks.Header" xml:space="preserve"><value>Forks conocidos de la comunidad</value></data>
+  <data name="Settings_AddKnownFork.Content" xml:space="preserve"><value>Añadir repositorio</value></data>
+  <data name="Settings_ForkIzamaruYotei" xml:space="preserve"><value>Fork de la comunidad para Ghost of Yōtei (PPSA26344)</value></data>
+  <data name="Settings_ForkSimnJsAnyKyty" xml:space="preserve"><value>Backend gráfico AnyKyty y mejoras para Ghost of Yōtei</value></data>
+  <data name="Settings_ForkSilverash" xml:space="preserve"><value>Fork de la comunidad de AnyPS5</value></data>
   <data name="Settings_PreferSource.Content" xml:space="preserve"><value>Descargar la versión que este repositorio marca como la última, en lugar de la más reciente de AnyPS5, cuando no se elige ninguna</value></data>
   <data name="Settings_CustomHeader.Text" xml:space="preserve"><value>Tu propia compilación</value></data>
   <data name="Settings_CustomHelp.Text" xml:space="preserve"><value>Si compilas AnyPS5 por tu cuenta, indica tu relinker y la carpeta con sus bibliotecas para Windows. Se usan en lugar de los descargados.</value></data>
@@ -198,6 +220,7 @@ Carpetas de módulos: {1}</value></data>
   <data name="Components_BadSource" xml:space="preserve"><value>«{0}» no es un repositorio de GitHub: escríbelo como usuario/nombre.</value></data>
   <data name="Components_SourceFailed" xml:space="preserve"><value>No se han podido leer las versiones de {0}: {1}</value></data>
   <data name="Components_NoLatest" xml:space="preserve"><value>{0} no marca como última ninguna versión con relinker y bibliotecas para Windows. Elige una versión de la lista.</value></data>
+  <data name="Components_NoForkRelease" xml:space="preserve"><value>{0} todavía no tiene ninguna versión publicada con relinker y bibliotecas para Windows. Compílalo desde su código o elige otra versión.</value></data>
   <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} está listo.</value></data>
   <data name="Components_Checking" xml:space="preserve"><value>Preguntando a GitHub por las versiones de AnyPS5…</value></data>
   <data name="Components_UpToDate" xml:space="preserve"><value>{0} es la versión más reciente y ya está descargada.</value></data>

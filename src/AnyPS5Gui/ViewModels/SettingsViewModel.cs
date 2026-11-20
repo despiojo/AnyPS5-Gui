@@ -1,5 +1,7 @@
 using System.Reflection;
 using AnyPS5Gui.Core;
+using AnyPS5Gui.Core.Components;
+using AnyPS5Gui.Core.Games;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -8,6 +10,11 @@ namespace AnyPS5Gui.ViewModels;
 public sealed record HostCheckItem(string Name, bool Ok)
 {
     public string Glyph => Ok ? "" : "";
+}
+
+public sealed record KnownForkItem(string Repository, string Summary)
+{
+    public string Label => $"{Repository}  ·  {Summary}";
 }
 
 /// <summary>The Settings page: AnyPS5 versions, folders, language, theme and whether this PC is up to it.</summary>
@@ -27,6 +34,9 @@ public partial class SettingsViewModel : ObservableObject
         LogFilesToKeep = App.Settings.LogFilesToKeep;
         LanguageIndex = _languageAtStart = Math.Max(0, Array.IndexOf(LanguageTags, App.Settings.Language ?? ""));
 
+        KnownForks = [.. GameCatalog.Forks.Select(fork => new KnownForkItem(fork.Repository, DescribeFork(fork.Repository)))];
+        SelectedKnownFork = KnownForks.FirstOrDefault();
+
         var host = App.Host;
         CpuName = host.CpuName;
         HostChecks = [.. host.Features.Select(feature => new HostCheckItem(feature.Name, feature.Supported)),
@@ -37,7 +47,9 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     public ComponentsViewModel Components => App.ComponentsViewModel;
+    public KnownForkItem[] KnownForks { get; }
 
+    [ObservableProperty] public partial KnownForkItem? SelectedKnownFork { get; set; }
     [ObservableProperty] public partial string OutputRoot { get; set; }
     [ObservableProperty] public partial string ExtraReleaseSource { get; set; }
     [ObservableProperty] public partial bool PreferExtraReleaseSource { get; set; }
@@ -130,6 +142,13 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void AddKnownFork()
+    {
+        if (SelectedKnownFork is { } fork)
+            ExtraReleaseSource = ReleaseClient.AddRepository(ExtraReleaseSource, fork.Repository);
+    }
+
+    [RelayCommand]
     private async Task BrowseOutputRootAsync()
     {
         if (await Pickers.PickFolderAsync() is { } folder) OutputRoot = folder;
@@ -160,6 +179,14 @@ public partial class SettingsViewModel : ObservableObject
         explorer.ArgumentList.Add(folder);
         System.Diagnostics.Process.Start(explorer)?.Dispose();
     }
+
+    public static string DescribeFork(string repository) => repository.ToLowerInvariant() switch
+    {
+        "izamaru/anyps5-yotei" => Loc.Get("Settings_ForkIzamaruYotei"),
+        "simnjs/anyps5" => Loc.Get("Settings_ForkSimnJsAnyKyty"),
+        "silverash-i8/anyps5-fork" => Loc.Get("Settings_ForkSilverash"),
+        _ => "",
+    };
 
     private static string? Clean(string value)
     {

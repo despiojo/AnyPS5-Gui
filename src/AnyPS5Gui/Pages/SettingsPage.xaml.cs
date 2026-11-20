@@ -21,4 +21,9 @@ public sealed partial class SettingsPage : Page
     {
         if (ReleaseBox.SelectedItem is ReleaseInfo release) ViewModel.Components.SelectedRelease = release;
     }
+
+    private void OnKnownForkSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (KnownForkBox.SelectedItem is KnownForkItem fork) ViewModel.SelectedKnownFork = fork;
+    }
 }
