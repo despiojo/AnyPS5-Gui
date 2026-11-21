@@ -29,6 +29,11 @@
   <data name="Convert_GamePath.PlaceholderText" xml:space="preserve"><value>The folder that holds eboot.bin. You can also drop it on this page</value></data>
   <data name="Convert_BrowseFolder.Content" xml:space="preserve"><value>Folder…</value></data>
   <data name="Convert_BrowseFile.Content" xml:space="preserve"><value>File…</value></data>
+  <data name="Convert_CheckCommunity.Content" xml:space="preserve"><value>Check community feedback</value></data>
+  <data name="Convert_DiscussionLink.Content" xml:space="preserve"><value>Game bring-up discussion</value></data>
+  <data name="Convert_UseFork.Content" xml:space="preserve"><value>Use fork</value></data>
+  <data name="Convert_OpenFork.Content" xml:space="preserve"><value>GitHub</value></data>
+  <data name="Convert_Version.Header" xml:space="preserve"><value>AnyPS5 version</value></data>
   <data name="Convert_Output.Header" xml:space="preserve"><value>Output folder</value></data>
   <data name="Convert_LinkFiles.Content" xml:space="preserve"><value>Link the game files instead of copying them</value></data>
   <data name="Convert_LinkFilesHelp.Text" xml:space="preserve"><value>Instant and takes no extra space, but the output has to be on the same NTFS drive as the game; otherwise the files are copied. A linked file is the dump's own file under a second name: do not edit it in place.</value></data>
@@ -68,6 +73,13 @@
   <data name="Convert_GameDetails" xml:space="preserve"><value>Executable: {0}
 Module folders: {1}</value></data>
   <data name="Convert_PatchFileFound" xml:space="preserve"><value>This folder has a relinker-patches.toml. It is applied unless you choose otherwise under Advanced options.</value></data>
+  <data name="Convert_AdviceGhostOfYotei" xml:space="preserve"><value>Community testing for Ghost of Yōtei (PPSA26344) uses the Yōtei and AnyKyty community forks (Discussion #675), with mimalloc enabled on launch.</value></data>
+  <data name="Convert_CommunityChecking" xml:space="preserve"><value>Checking GitHub discussions and community forks…</value></data>
+  <data name="Convert_CommunityDiscussionStatus" xml:space="preserve"><value>Bring-up thread: {0} — Status: {1} ({2} comments)</value></data>
+  <data name="Convert_CommunityDiscussionFound" xml:space="preserve"><value>Bring-up thread: {0} ({1} comments)</value></data>
+  <data name="Convert_CommunityForksFound" xml:space="preserve"><value>Found {0} community fork(s) on GitHub.</value></data>
+  <data name="Convert_CommunityNothingFound" xml:space="preserve"><value>No bring-up thread or game-specific fork was found on GitHub yet.</value></data>
+  <data name="Convert_UsingFork" xml:space="preserve"><value>Selected AnyPS5 {0} for this game.</value></data>
   <data name="Issue_NoExecutable" xml:space="preserve"><value>No eboot.bin was found here. Choose the folder of an extracted game, or its executable with “File…”.</value></data>
   <data name="Issue_WrappedExecutable" xml:space="preserve"><value>The game comes as SELF containers, as a dump usually does. They are unwrapped into the output folder before converting; the dump itself is not changed.</value></data>
   <data name="Issue_NotAnElf" xml:space="preserve"><value>The executable is not an ELF file. It may still be encrypted.</value></data>
@@ -100,8 +112,12 @@ Module folders: {1}</value></data>
   <data name="Games_AddExisting.Content" xml:space="preserve"><value>Add a converted game…</value></data>
   <data name="Games_Launch.Content" xml:space="preserve"><value>Launch</value></data>
   <data name="Games_Stop.Content" xml:space="preserve"><value>Stop</value></data>
+  <data name="Games_Reconvert.Content" xml:space="preserve"><value>Convert again</value></data>
   <data name="Games_OpenFolder.Content" xml:space="preserve"><value>Open folder</value></data>
   <data name="Games_Remove.Content" xml:space="preserve"><value>Remove from list</value></data>
+  <data name="Games_DiscussionLink.Content" xml:space="preserve"><value>Community discussion</value></data>
+  <data name="Games_LibraryVersion.Header" xml:space="preserve"><value>System libraries (libs/)</value></data>
+  <data name="Games_SwitchLibs.Content" xml:space="preserve"><value>Apply libraries</value></data>
   <data name="Games_Display.Header" xml:space="preserve"><value>Display</value></data>
   <data name="Games_Fullscreen.Header" xml:space="preserve"><value>Start in fullscreen</value></data>
   <data name="Games_Fullscreen.OnContent" xml:space="preserve"><value>On</value></data>
@@ -144,6 +160,7 @@ Module folders: {1}</value></data>
   <data name="Games_ExecutableMissing" xml:space="preserve"><value>{0} no longer exists. Convert the game again or remove it from the list.</value></data>
   <data name="Games_Exited" xml:space="preserve"><value>The game ended with exit code {0} ({1}).</value></data>
   <data name="Games_Stopped" xml:space="preserve"><value>Stopped.</value></data>
+  <data name="Games_LibsSwitched" xml:space="preserve"><value>System libraries updated to AnyPS5 {0}.</value></data>
 
   <!-- Settings page -->
   <data name="Settings_Title.Text" xml:space="preserve"><value>Settings</value></data>
@@ -157,8 +174,13 @@ Module folders: {1}</value></data>
   <data name="Settings_Install.Content" xml:space="preserve"><value>Download</value></data>
   <data name="Settings_SourceHeader.Text" xml:space="preserve"><value>Builds from another repository</value></data>
   <data name="Settings_SourceHelp.Text" xml:space="preserve"><value>The releases of another GitHub repository are listed with AnyPS5's own, with its name beside them: a fork that publishes builds with changes AnyPS5 has not released yet, for example. AnyPS5 does not review or support them; add only a repository you trust.</value></data>
-  <data name="Settings_ExtraSource.Header" xml:space="preserve"><value>GitHub repository (owner/name)</value></data>
+  <data name="Settings_ExtraSource.Header" xml:space="preserve"><value>GitHub repositories (owner/name, comma-separated)</value></data>
   <data name="Settings_ExtraSource.PlaceholderText" xml:space="preserve"><value>Empty: only AnyPS5's own releases</value></data>
+  <data name="Settings_KnownForks.Header" xml:space="preserve"><value>Known community forks</value></data>
+  <data name="Settings_AddKnownFork.Content" xml:space="preserve"><value>Add repository</value></data>
+  <data name="Settings_ForkIzamaruYotei" xml:space="preserve"><value>Ghost of Yōtei (PPSA26344) community fork</value></data>
+  <data name="Settings_ForkSimnJsAnyKyty" xml:space="preserve"><value>AnyKyty graphics backend &amp; Ghost of Yōtei fixes</value></data>
+  <data name="Settings_ForkSilverash" xml:space="preserve"><value>Community fork of AnyPS5</value></data>
   <data name="Settings_PreferSource.Content" xml:space="preserve"><value>Download the release this repository marks as its latest, instead of AnyPS5's newest, when no version is chosen</value></data>
   <data name="Settings_CustomHeader.Text" xml:space="preserve"><value>Your own build</value></data>
   <data name="Settings_CustomHelp.Text" xml:space="preserve"><value>If you build AnyPS5 yourself, point to your relinker and to the folder with its Windows libraries. They are used instead of the downloaded ones.</value></data>
@@ -198,6 +220,7 @@ Module folders: {1}</value></data>
   <data name="Components_BadSource" xml:space="preserve"><value>“{0}” is not a GitHub repository: write it as owner/name.</value></data>
   <data name="Components_SourceFailed" xml:space="preserve"><value>The releases of {0} could not be read: {1}</value></data>
   <data name="Components_NoLatest" xml:space="preserve"><value>{0} marks no release with a Windows relinker and libraries as its latest. Choose a version from the list.</value></data>
+  <data name="Components_NoForkRelease" xml:space="preserve"><value>{0} has no published Windows release with relinker and libraries yet. Build it from source or pick another version.</value></data>
   <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} is ready.</value></data>
   <data name="Components_Checking" xml:space="preserve"><value>Asking GitHub for the AnyPS5 releases…</value></data>
   <data name="Components_UpToDate" xml:space="preserve"><value>{0} is the newest version and is already downloaded.</value></data>

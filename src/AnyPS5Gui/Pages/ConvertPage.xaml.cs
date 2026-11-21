@@ -23,4 +23,14 @@ public sealed partial class ConvertPage : Page
         var items = await e.DataView.GetStorageItemsAsync();
         if (items.Count > 0 && !string.IsNullOrEmpty(items[0].Path)) ViewModel.OpenGame(items[0].Path);
     }
+
+    private void OnVersionSelected(object sender, SelectionChangedEventArgs e)
+    {
+        if (ConvertVersionBox.SelectedItem is string version) ViewModel.SelectedVersion = version;
+    }
+
+    private void OnUseForkClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: ForkChoiceItem fork }) ViewModel.UseForkCommand.Execute(fork);
+    }
 }

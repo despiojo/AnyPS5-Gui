@@ -65,12 +65,24 @@ public sealed partial class ComponentStore(string root)
         return at < 0 ? version : $"{version[..at]}  ·  {version[(at + 1)..].Replace('~', '/')}";
     }
 
-    /// <summary>Custom paths from the settings win over a downloaded version; the newest download is the fallback.</summary>
-    public ResolvedComponents Resolve(AppSettings settings)
+    /// <summary>The GitHub repository an installed version came from.</summary>
+    public static string RepositoryOf(string version)
     {
-        var version = settings.ActiveVersion is { } active && IsInstalled(active)
-            ? active
-            : InstalledVersions().FirstOrDefault();
+        var at = version.IndexOf('@');
+        return at < 0 ? ReleaseClient.Repository : version[(at + 1)..].Replace('~', '/');
+    }
+
+    /// <summary>Custom paths from the settings win over a downloaded version; the newest download is the fallback.</summary>
+    public ResolvedComponents Resolve(AppSettings settings) => Resolve(settings, settings.ActiveVersion);
+
+    /// <summary>Resolves a specific installed version when available, falling back to the active or newest download.</summary>
+    public ResolvedComponents Resolve(AppSettings settings, string? preferredVersion)
+    {
+        var version = preferredVersion is { } chosen && IsInstalled(chosen)
+            ? chosen
+            : settings.ActiveVersion is { } active && IsInstalled(active)
+                ? active
+                : InstalledVersions().FirstOrDefault();
 
         var relinker = !string.IsNullOrWhiteSpace(settings.CustomRelinkerPath) && File.Exists(settings.CustomRelinkerPath)
             ? settings.CustomRelinkerPath

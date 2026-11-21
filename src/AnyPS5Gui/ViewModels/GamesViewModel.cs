@@ -15,8 +15,13 @@ public partial class GamesViewModel : ObservableObject
         Languages = [Loc.Get("Games_LanguageDefault"), Loc.Get("Games_LanguageAuto"), .. ConsoleLanguages.Names];
         Refresh();
         Selected = Games.FirstOrDefault();
+        Components.Changed += (_, _) =>
+        {
+            foreach (var game in Games) game.EntryChanged();
+        };
     }
 
+    public ComponentsViewModel Components => App.ComponentsViewModel;
     public ObservableCollection<GameItemViewModel> Games { get; } = [];
 
     /// <summary>Entries of the language box, in the order <see cref="GameItemViewModel.LanguageIndex"/> counts.</summary>

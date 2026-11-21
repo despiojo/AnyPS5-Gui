@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using AnyPS5Gui.Core.Components;
 using AnyPS5Gui.Core.Conversion;
 using AnyPS5Gui.Core.Games;
 using AnyPS5Gui.Core.Library;
@@ -14,20 +15,28 @@ namespace AnyPS5Gui.ViewModels;
 
 public sealed record IssueItem(InfoBarSeverity Severity, string Message);
 
+public sealed record ForkChoiceItem(string Repository, string Summary)
+{
+    public string Label => string.IsNullOrWhiteSpace(Summary) ? Repository : $"{Repository}  ·  {Summary}";
+    public Uri Uri => new($"https://github.com/{Repository}");
+}
+
 /// <summary>The Convert page: pick a game, choose options, run the relinker and lay out the result.</summary>
 public partial class ConvertViewModel : ObservableObject
 {
     // Changing any of these changes the command line shown to the user.
     private static readonly HashSet<string> CommandInputs =
     [
-        nameof(OutputFolder), nameof(ToIntel), nameof(WindowsGui), nameof(WindowsDiagnostics), nameof(FrameRedZone),
-        nameof(TraceImports), nameof(Registry), nameof(FunctionSymbolRoots), nameof(UnusedFilterIndex),
-        nameof(FixedBase), nameof(SceModulePath), nameof(ModuleDirectories), nameof(Executables),
-        nameof(PatchModeIndex), nameof(PatchFile), nameof(ExtraArguments),
+        nameof(OutputFolder), nameof(SelectedVersion), nameof(ToIntel), nameof(WindowsGui),
+        nameof(WindowsDiagnostics), nameof(FrameRedZone), nameof(TraceImports), nameof(Registry),
+        nameof(FunctionSymbolRoots), nameof(UnusedFilterIndex), nameof(FixedBase), nameof(SceModulePath),
+        nameof(ModuleDirectories), nameof(Executables), nameof(PatchModeIndex), nameof(PatchFile),
+        nameof(ExtraArguments),
     ];
 
     // Typing a path looks at the folder once the typing pauses, not on every key.
     private readonly DispatcherQueueTimer _inspectTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+    private readonly CommunityClient _community = new(App.Http);
     private CancellationTokenSource? _cancellation;
     private bool _outputChosenByUser;
     private bool _settingOutput;
@@ -53,6 +62,10 @@ public partial class ConvertViewModel : ObservableObject
         GameTitle = "";
         GameSubtitle = "";
         GameDetails = "";
+        AdviceMessage = "";
+        CommunityStatus = "";
+        DiscussionUri = new Uri(GameCatalog.DiscussionSearchUrl(null));
+        SelectedVersion = Components.Current.Version;
 
         // Games are built for an AMD CPU; on Intel the relinker has to rewrite the AMD-only instructions.
         ToIntel = App.Host.IsIntel;
@@ -60,6 +73,9 @@ public partial class ConvertViewModel : ObservableObject
 
         Components.Changed += (_, _) =>
         {
+            if (SelectedVersion is null || !App.Components.IsInstalled(SelectedVersion))
+                SelectedVersion = PickVersionForGame(Game);
+            OnPropertyChanged(nameof(CurrentComponents));
             NotifyCommands();
             UpdatePreview();
         };
@@ -69,16 +85,40 @@ public partial class ConvertViewModel : ObservableObject
 
     public LogBuffer Log { get; } = new();
     public ObservableCollection<IssueItem> Issues { get; } = [];
+    public ObservableCollection<ForkChoiceItem> SuggestedForks { get; } = [];
     public ComponentsViewModel Components => App.ComponentsViewModel;
+    public ResolvedComponents CurrentComponents => App.Components.Resolve(App.Settings, SelectedVersion);
 
     [ObservableProperty] public partial string GamePath { get; set; }
     [ObservableProperty] public partial string OutputFolder { get; set; }
+    [ObservableProperty] public partial string? SelectedVersion { get; set; }
 
-    [ObservableProperty] public partial bool HasGame { get; set; }
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CheckCommunityCommand))]
+    public partial bool HasGame { get; set; }
+
     [ObservableProperty] public partial string GameTitle { get; set; }
     [ObservableProperty] public partial string GameSubtitle { get; set; }
     [ObservableProperty] public partial string GameDetails { get; set; }
     [ObservableProperty] public partial ImageSource? Icon { get; set; }
+    [ObservableProperty] public partial Uri DiscussionUri { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasAdvice))]
+    public partial string AdviceMessage { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCommunityStatus))]
+    public partial string CommunityStatus { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CheckCommunityCommand))]
+    public partial bool IsCheckingCommunity { get; set; }
+
+    public bool HasAdvice => AdviceMessage.Length > 0;
+    public bool HasCommunityStatus => CommunityStatus.Length > 0;
+    public bool HasSuggestedForks => SuggestedForks.Count > 0;
+    public bool CanCheckCommunity => HasGame && !IsCheckingCommunity;
 
     [ObservableProperty] public partial bool ToIntel { get; set; }
     [ObservableProperty] public partial bool WindowsGui { get; set; }
@@ -134,11 +174,13 @@ public partial class ConvertViewModel : ObservableObject
     }
 
     /// <summary>A game chosen in one go (browsed for, dropped, remembered) rather than typed: shown at once.</summary>
-    public void OpenGame(string path)
+    public void OpenGame(string path, string? preferredVersion = null)
     {
         GamePath = path;
         _inspectTimer.Stop();
         Inspect();
+        if (preferredVersion is not null && App.Components.IsInstalled(preferredVersion))
+            SelectedVersion = preferredVersion;
     }
 
     partial void OnOutputFolderChanged(string value)
@@ -211,8 +253,89 @@ public partial class ConvertViewModel : ObservableObject
         if (_lastConverted is not null) App.GamesViewModel.Select(_lastConverted);
     }
 
+    [RelayCommand(CanExecute = nameof(CanCheckCommunity))]
+    private async Task CheckCommunityAsync()
+    {
+        if (Game is not { } game) return;
+        IsCheckingCommunity = true;
+        CommunityStatus = Loc.Get("Convert_CommunityChecking");
+        try
+        {
+            CommunityReport report;
+            try
+            {
+                report = await _community.LookupGameAsync(game.Param?.TitleId, game.DisplayName);
+            }
+            catch (HttpRequestException) when (!ReferenceEquals(Game, game))
+            {
+                return;
+            }
+            if (!ReferenceEquals(Game, game)) return;
+            if (report.Discussions.FirstOrDefault() is { } discussion)
+            {
+                DiscussionUri = new Uri(discussion.Url);
+                CommunityStatus = discussion.Status is { Length: > 0 } status
+                    ? Loc.Format("Convert_CommunityDiscussionStatus", discussion.Title, status, discussion.Comments)
+                    : Loc.Format("Convert_CommunityDiscussionFound", discussion.Title, discussion.Comments);
+            }
+            else
+            {
+                CommunityStatus = report.Forks.Count > 0
+                    ? Loc.Format("Convert_CommunityForksFound", report.Forks.Count)
+                    : Loc.Get("Convert_CommunityNothingFound");
+            }
+
+            foreach (var fork in report.Forks)
+            {
+                if (SuggestedForks.Any(existing =>
+                        existing.Repository.Equals(fork.Repository, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+                var summary = !string.IsNullOrWhiteSpace(fork.Description)
+                    ? fork.Description
+                    : SettingsViewModel.DescribeFork(fork.Repository);
+                SuggestedForks.Add(new ForkChoiceItem(fork.Repository, summary));
+            }
+            OnPropertyChanged(nameof(HasSuggestedForks));
+        }
+        catch (HttpRequestException e)
+        {
+            CommunityStatus = e.Message;
+        }
+        finally
+        {
+            IsCheckingCommunity = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task UseForkAsync(ForkChoiceItem? fork)
+    {
+        if (fork is null) return;
+        var installed = App.Components.InstalledVersions().FirstOrDefault(version =>
+            ComponentStore.RepositoryOf(version).Equals(fork.Repository, StringComparison.OrdinalIgnoreCase));
+        if (installed is not null)
+        {
+            SelectedVersion = installed;
+            CommunityStatus = Loc.Format("Convert_UsingFork", ComponentStore.VersionLabel(installed));
+            return;
+        }
+
+        await Components.UseRepositoryAsync(fork.Repository);
+        var downloaded = App.Components.InstalledVersions().FirstOrDefault(version =>
+            ComponentStore.RepositoryOf(version).Equals(fork.Repository, StringComparison.OrdinalIgnoreCase));
+        if (downloaded is not null)
+        {
+            SelectedVersion = downloaded;
+            CommunityStatus = Loc.Format("Convert_UsingFork", ComponentStore.VersionLabel(downloaded));
+        }
+        else
+        {
+            CommunityStatus = Components.HasError ? Components.Error : Components.Status;
+        }
+    }
+
     private bool CanRun => IsIdle && Game is { CanConvert: true } && !string.IsNullOrWhiteSpace(OutputFolder) &&
-                           Components.Current.HasRelinker;
+                           CurrentComponents.HasRelinker;
 
     private void NotifyCommands()
     {
@@ -277,9 +400,52 @@ public partial class ConvertViewModel : ObservableObject
             : Loc.Format("Convert_GameDetails", shown.Executable,
                 shown.ModuleDirectories.Count > 0 ? string.Join(", ", shown.ModuleDirectories) : "—");
         Icon = Images.Load(shown?.IconPath);
+        DiscussionUri = new Uri(GameCatalog.DiscussionSearchUrl(shown?.Param?.TitleId, shown?.DisplayName));
+
+        CommunityStatus = "";
+        SuggestedForks.Clear();
+        if (GameCatalog.Find(shown) is { } profile)
+        {
+            AdviceMessage = DescribeProfile(profile);
+            foreach (var repository in profile.RecommendedForks)
+                SuggestedForks.Add(new ForkChoiceItem(repository, SettingsViewModel.DescribeFork(repository)));
+        }
+        else
+        {
+            AdviceMessage = "";
+        }
+        OnPropertyChanged(nameof(HasSuggestedForks));
+
+        if (shown is not null) SelectedVersion = PickVersionForGame(shown);
 
         NotifyCommands();
         UpdatePreview();
+    }
+
+    private static string DescribeProfile(GameProfile profile) => profile.SummaryKey switch
+    {
+        "Convert_AdviceGhostOfYotei" => Loc.Get("Convert_AdviceGhostOfYotei"),
+        _ => "",
+    };
+
+    private string? PickVersionForGame(GameInfo? game)
+    {
+        var installed = App.Components.InstalledVersions();
+        if (GameCatalog.RecommendInstalledVersion(game, installed) is { } recommended)
+            return recommended;
+
+        if (game is not null)
+        {
+            var previous = App.Library.Games.FirstOrDefault(entry =>
+                (!string.IsNullOrEmpty(entry.SourceFolder) &&
+                 string.Equals(Path.GetFullPath(entry.SourceFolder), Path.GetFullPath(game.Folder), StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrEmpty(entry.TitleId) &&
+                 string.Equals(entry.TitleId, game.Param?.TitleId, StringComparison.OrdinalIgnoreCase)));
+            if (previous?.ComponentVersion is { } previousVersion && App.Components.IsInstalled(previousVersion))
+                return previousVersion;
+        }
+
+        return Components.Current.Version;
     }
 
     private void SetOutput(string folder)
@@ -312,7 +478,7 @@ public partial class ConvertViewModel : ObservableObject
     private ConversionRequest? BuildRequest(bool dryRun)
     {
         if (Game is not { CanConvert: true } game || string.IsNullOrWhiteSpace(OutputFolder)) return null;
-        var components = Components.Current;
+        var components = CurrentComponents;
         return new ConversionRequest
         {
             Game = game,
@@ -381,16 +547,20 @@ public partial class ConvertViewModel : ObservableObject
                 else Log.Add(LogKind.Warning, Loc.Get("Convert_NoLibraries"));
                 if (result.GameFiles is { } gameFiles) Log.Add(LogKind.Info, Loc.Format("Convert_GameFilesPlaced", Describe(gameFiles)));
 
-                _lastConverted = App.Library.AddOrUpdate(new GameEntry
+                var entry = new GameEntry
                 {
                     Title = request.Game.DisplayName,
                     TitleId = request.Game.Param?.TitleId,
                     ContentVersion = request.Game.Param?.ContentVersion,
                     ExecutablePath = Path.GetFullPath(request.OutputExecutable),
                     SourceFolder = request.Game.Folder,
-                    ComponentVersion = Components.Current.Version,
+                    ComponentVersion = CurrentComponents.Version,
                     ConvertedAt = DateTimeOffset.Now,
-                });
+                };
+                if (GameCatalog.Find(request.Game) is { RecommendMimalloc: true })
+                    entry.Launch.Mimalloc = true;
+
+                _lastConverted = App.Library.AddOrUpdate(entry);
                 App.GamesViewModel.Refresh();
                 Finish(InfoBarSeverity.Success, Loc.Format("Convert_Done", request.OutputExecutable), canShowInGames: true);
             }

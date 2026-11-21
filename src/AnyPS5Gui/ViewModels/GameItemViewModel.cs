@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using AnyPS5Gui.Core;
 using AnyPS5Gui.Core.Components;
+using AnyPS5Gui.Core.Conversion;
+using AnyPS5Gui.Core.Games;
 using AnyPS5Gui.Core.Launch;
 using AnyPS5Gui.Core.Library;
 using AnyPS5Gui.Core.Relinker;
@@ -23,6 +25,7 @@ public partial class GameItemViewModel : ObservableObject
     {
         Entry = entry;
         Icon = Images.Load(entry.IconPath);
+        SelectedLibraryVersion = PickLibraryVersion();
     }
 
     public GameEntry Entry { get; }
@@ -34,6 +37,7 @@ public partial class GameItemViewModel : ObservableObject
     // What a screen reader announces for the game in the list.
     public override string ToString() => Title;
     public string Directory => Entry.Directory;
+    public Uri DiscussionUri => new(GameCatalog.DiscussionSearchUrl(Entry.TitleId, Entry.Title));
 
     public string Subtitle => string.Join("  ·  ",
         new[]
@@ -57,10 +61,17 @@ public partial class GameItemViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsIdle))]
-    [NotifyCanExecuteChangedFor(nameof(LaunchCommand), nameof(StopCommand))]
+    [NotifyCanExecuteChangedFor(nameof(LaunchCommand), nameof(StopCommand), nameof(ReconvertCommand), nameof(SwitchLibrariesCommand))]
     public partial bool IsRunning { get; set; }
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SwitchLibrariesCommand))]
+    public partial string? SelectedLibraryVersion { get; set; }
+
     public bool IsIdle => !IsRunning;
+    public bool CanReconvert => IsIdle && (!string.IsNullOrWhiteSpace(Entry.SourceFolder) ||
+                                           System.IO.Directory.Exists(Path.Combine(Entry.Directory, "app0")));
+    public bool CanSwitchLibraries => IsIdle && SelectedLibraryVersion is { } version && App.Components.IsInstalled(version);
 
     private LaunchSettings Launch => Entry.Launch;
 
@@ -159,9 +170,47 @@ public partial class GameItemViewModel : ObservableObject
     /// <summary>The entry was converted again: its title or version may have changed.</summary>
     public void EntryChanged()
     {
+        SelectedLibraryVersion = PickLibraryVersion();
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Subtitle));
         OnPropertyChanged(nameof(Directory));
+        OnPropertyChanged(nameof(DiscussionUri));
+        ReconvertCommand.NotifyCanExecuteChanged();
+        SwitchLibrariesCommand.NotifyCanExecuteChanged();
+    }
+
+    private string? PickLibraryVersion() =>
+        Entry.ComponentVersion is { } v && App.Components.IsInstalled(v)
+            ? v
+            : App.Components.InstalledVersions().FirstOrDefault();
+
+    [RelayCommand(CanExecute = nameof(CanReconvert))]
+    private void Reconvert()
+    {
+        var source = !string.IsNullOrWhiteSpace(Entry.SourceFolder) && System.IO.Directory.Exists(Entry.SourceFolder)
+            ? Entry.SourceFolder
+            : Path.Combine(Entry.Directory, "app0");
+        App.ConvertViewModel.OpenGame(source, Entry.ComponentVersion);
+        App.Window.Navigate(MainWindow.ConvertTag);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSwitchLibraries))]
+    private void SwitchLibraries()
+    {
+        if (SelectedLibraryVersion is not { } version || !App.Components.IsInstalled(version)) return;
+        try
+        {
+            var destination = Path.Combine(Entry.Directory, "libs");
+            FileLinker.Mirror(App.Components.LibsPath(version), destination, App.Settings.LinkFiles);
+            Entry.ComponentVersion = version;
+            App.Library.Save();
+            EntryChanged();
+            Log.Add(LogKind.Success, Loc.Format("Games_LibsSwitched", ComponentStore.VersionLabel(version)));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Log.Add(LogKind.Error, e.Message);
+        }
     }
 
     [RelayCommand(CanExecute = nameof(IsIdle))]

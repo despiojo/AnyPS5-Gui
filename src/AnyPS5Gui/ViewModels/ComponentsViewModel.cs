@@ -157,36 +157,69 @@ public partial class ComponentsViewModel : ObservableObject
 
     private bool CanRemoveActive => IsIdle && ActiveVersion is not null;
 
+    /// <summary>
+    /// Adds a fork repository to the release sources, checks its releases on GitHub, and selects its
+    /// newest release when it publishes Windows binaries.
+    /// </summary>
+    public async Task UseRepositoryAsync(string repository)
+    {
+        if (!IsIdle || !ReleaseClient.IsValidRepository(repository)) return;
+        var updated = ReleaseClient.AddRepository(App.Settings.ExtraReleaseSource, repository);
+        if (App.Settings.ExtraReleaseSource != updated)
+        {
+            App.Settings.ExtraReleaseSource = updated;
+            App.SaveSettings();
+            if (App.SettingsViewModel is not null) App.SettingsViewModel.ExtraReleaseSource = updated;
+        }
+
+        await RunAsync(async cancellation =>
+        {
+            await LoadReleasesAsync(cancellation);
+            var fromRepo = Releases.FirstOrDefault(r =>
+                r.Repository.Equals(repository, StringComparison.OrdinalIgnoreCase));
+            if (fromRepo is not null)
+            {
+                SelectedRelease = fromRepo;
+                Status = Loc.Format(
+                    App.Components.IsInstalled(fromRepo.VersionName) ? "Components_UpToDate" : "Components_Available",
+                    fromRepo.Label);
+            }
+            else if (!HasError)
+            {
+                Error = Loc.Format("Components_NoForkRelease", repository);
+            }
+        });
+    }
+
     private async Task LoadReleasesAsync(CancellationToken cancellation)
     {
         Status = Loc.Get("Components_Checking");
         IsIndeterminate = true;
         var official = await _client.GetReleasesAsync(cancellationToken: cancellation);
 
-        IReadOnlyList<ReleaseInfo> other = [];
+        var sources = ReleaseClient.SplitRepositories(App.Settings.ExtraReleaseSource);
+        var other = new List<ReleaseInfo>();
         ReleaseInfo? latestOther = null;
-        var prefer = false;
+        var prefer = sources.Count > 0 && App.Settings.PreferExtraReleaseSource;
         string? sourceError = null;
-        if (App.Settings.ExtraReleaseSource is { Length: > 0 } source &&
-            !source.Equals(ReleaseClient.Repository, StringComparison.OrdinalIgnoreCase))
+        foreach (var source in sources)
         {
-            prefer = App.Settings.PreferExtraReleaseSource;
             if (!ReleaseClient.IsValidRepository(source))
             {
-                sourceError = Loc.Format("Components_BadSource", source);
+                sourceError ??= Loc.Format("Components_BadSource", source);
+                continue;
             }
-            else
+
+            // A source failing, or not answering in time, leaves AnyPS5's own releases to choose from.
+            try
             {
-                // The source failing, or not answering in time, leaves AnyPS5's own releases to choose from.
-                try
-                {
-                    other = await _client.GetReleasesAsync(source, cancellation);
-                    if (prefer) latestOther = await _client.GetLatestReleaseAsync(source, cancellation);
-                }
-                catch (HttpRequestException e)
-                {
-                    sourceError = Loc.Format("Components_SourceFailed", source, e.Message);
-                }
+                other.AddRange(await _client.GetReleasesAsync(source, cancellation));
+                if (prefer && latestOther is not { IsComplete: true })
+                    latestOther = await _client.GetLatestReleaseAsync(source, cancellation);
+            }
+            catch (HttpRequestException e)
+            {
+                sourceError ??= Loc.Format("Components_SourceFailed", source, e.Message);
             }
         }
 
@@ -201,7 +234,7 @@ public partial class ComponentsViewModel : ObservableObject
 
         // A preferred source with no latest release to take leaves the choice to the list: a download
         // takes none on its own, not even AnyPS5's newest, which is not what was asked for.
-        if (prefer && offer.Default is null) sourceError ??= Loc.Format("Components_NoLatest", App.Settings.ExtraReleaseSource);
+        if (prefer && offer.Default is null) sourceError ??= Loc.Format("Components_NoLatest", sources[0]);
         Status = offer.Default is { } latest
             ? Loc.Format(App.Components.IsInstalled(latest.VersionName) ? "Components_UpToDate" : "Components_Available", latest.Label)
             : prefer ? "" : Loc.Get("Components_NoRelease");
