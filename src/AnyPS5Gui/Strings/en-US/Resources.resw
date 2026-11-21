@@ -221,6 +221,9 @@ Module folders: {1}</value></data>
   <data name="Components_SourceFailed" xml:space="preserve"><value>The releases of {0} could not be read: {1}</value></data>
   <data name="Components_NoLatest" xml:space="preserve"><value>{0} marks no release with a Windows relinker and libraries as its latest. Choose a version from the list.</value></data>
   <data name="Components_NoForkRelease" xml:space="preserve"><value>{0} has no published Windows release with relinker and libraries yet. Build it from source or pick another version.</value></data>
+  <data name="Components_PipelineLaunching" xml:space="preserve"><value>Launching a Windows build of {0} ({1}) on the {2} pipeline…</value></data>
+  <data name="Components_PipelineWaiting" xml:space="preserve"><value>Building {0} ({1}) on the {2} pipeline… waiting for the release to be published.</value></data>
+  <data name="Components_PipelineFailed" xml:space="preserve"><value>The pipeline build of {0} on {1} failed ({2}).</value></data>
   <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} is ready.</value></data>
   <data name="Components_Checking" xml:space="preserve"><value>Asking GitHub for the AnyPS5 releases…</value></data>
   <data name="Components_UpToDate" xml:space="preserve"><value>{0} is the newest version and is already downloaded.</value></data>

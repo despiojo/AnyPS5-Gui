@@ -206,6 +206,102 @@ public class ComponentTests
     }
 
     [Fact]
+    public async Task A_fork_with_no_release_of_its_own_uses_a_build_from_our_pipeline()
+    {
+        const string pipelineReleases = """
+            [
+              {
+                "tag_name": "vmain-4f41f4c", "name": "vmain-4f41f4c (Izamaru/AnyPS5-Yotei)",
+                "prerelease": false, "draft": false,
+                "body": "Unofficial Windows build of [Izamaru/AnyPS5-Yotei](https://github.com/Izamaru/AnyPS5-Yotei).\n- Base: `main` at Izamaru/AnyPS5-Yotei@4f41f4c375f5abb487dbd184fbc150f31994d762",
+                "assets": [
+                  { "name": "relinker-vmain-4f41f4c.exe", "size": 10, "browser_download_url": "https://example.test/r.exe" },
+                  { "name": "prx-windows-vmain-4f41f4c.zip", "size": 20, "browser_download_url": "https://example.test/p.zip" }
+                ]
+              },
+              {
+                "tag_name": "vmain-a72186d", "name": "vmain-a72186d",
+                "prerelease": false, "draft": false,
+                "body": "- Base: `main` at boykopovar/AnyPS5@a72186d000000000000000000000000000000000",
+                "assets": [
+                  { "name": "relinker-vmain-a72186d.exe", "size": 10, "browser_download_url": "https://example.test/r2.exe" },
+                  { "name": "prx-windows-vmain-a72186d.zip", "size": 20, "browser_download_url": "https://example.test/p2.zip" }
+                ]
+              }
+            ]
+            """;
+        using var http = new HttpClient(new FakeDownloads(new()
+        {
+            ["https://api.github.com/repos/Izamaru/AnyPS5-Yotei/releases?per_page=15"] = "[]"u8.ToArray(),
+            [$"https://api.github.com/repos/{ReleaseClient.PipelineRepository}/releases?per_page=30"] =
+                System.Text.Encoding.UTF8.GetBytes(pipelineReleases),
+        }));
+        var client = new ReleaseClient(http);
+
+        var releases = await client.GetReleasesAsync("Izamaru/AnyPS5-Yotei", TestContext.Current.CancellationToken);
+        var single = Assert.Single(releases);
+        Assert.Equal("vmain-4f41f4c", single.Tag);
+        Assert.Equal("Izamaru/AnyPS5-Yotei", single.Repository);
+        Assert.Equal("vmain-4f41f4c@Izamaru~AnyPS5-Yotei", single.VersionName);
+        Assert.True(single.IsComplete);
+
+        var latest = await client.GetLatestReleaseAsync("Izamaru/AnyPS5-Yotei", TestContext.Current.CancellationToken);
+        Assert.NotNull(latest);
+        Assert.Equal("vmain-4f41f4c@Izamaru~AnyPS5-Yotei", latest.VersionName);
+    }
+
+    [Fact]
+    public async Task A_fork_without_any_build_launches_one_on_our_pipeline_and_waits_for_it()
+    {
+        const string repoMeta = """{ "default_branch": "AnyKyty" }""";
+        const string commitMeta = """{ "sha": "99cc4a54c83bf152b7979d1d762d51cc860c33e7" }""";
+        const string publishedReleases = """
+            [
+              {
+                "tag_name": "vAnyKyty-99cc4a5", "name": "vAnyKyty-99cc4a5 (simnJS/AnyPS5)",
+                "prerelease": false, "draft": false,
+                "body": "- Base: `AnyKyty` at simnJS/AnyPS5@99cc4a54c83bf152b7979d1d762d51cc860c33e7",
+                "assets": [
+                  { "name": "relinker-vAnyKyty-99cc4a5.exe", "size": 10, "browser_download_url": "https://example.test/r.exe" },
+                  { "name": "prx-windows-vAnyKyty-99cc4a5.zip", "size": 20, "browser_download_url": "https://example.test/p.zip" }
+                ]
+              }
+            ]
+            """;
+
+        var files = new Dictionary<string, byte[]>
+        {
+            ["https://api.github.com/repos/simnJS/AnyPS5"] = System.Text.Encoding.UTF8.GetBytes(repoMeta),
+            ["https://api.github.com/repos/simnJS/AnyPS5/commits/AnyKyty"] = System.Text.Encoding.UTF8.GetBytes(commitMeta),
+            [$"https://api.github.com/repos/{ReleaseClient.PipelineRepository}/releases?per_page=30"] = "[]"u8.ToArray(),
+            [$"https://api.github.com/repos/{ReleaseClient.PipelineRepository}/actions/workflows/{ReleaseClient.PipelineWorkflow}/runs?per_page=20"] =
+                """{ "workflow_runs": [] }"""u8.ToArray(),
+        };
+
+        PipelineBuildTarget? dispatched = null;
+        using var http = new HttpClient(new FakeDownloads(files));
+        var client = new ReleaseClient(http)
+        {
+            PollInterval = TimeSpan.FromMilliseconds(10),
+            PipelineDispatcher = (target, _) =>
+            {
+                dispatched = target;
+                files[$"https://api.github.com/repos/{ReleaseClient.PipelineRepository}/releases?per_page=30"] =
+                    System.Text.Encoding.UTF8.GetBytes(publishedReleases);
+                return Task.CompletedTask;
+            },
+        };
+
+        var release = await client.EnsurePipelineReleaseAsync("simnJS/AnyPS5", null, TestContext.Current.CancellationToken);
+
+        Assert.NotNull(dispatched);
+        Assert.Equal(new PipelineBuildTarget("simnJS/AnyPS5", "AnyKyty", "99cc4a54c83bf152b7979d1d762d51cc860c33e7", "vAnyKyty-99cc4a5"),
+            dispatched);
+        Assert.NotNull(release);
+        Assert.Equal("vAnyKyty-99cc4a5@simnJS~AnyPS5", release.VersionName);
+    }
+
+    [Fact]
     public async Task A_latest_release_that_never_arrives_is_a_failed_request()
     {
         using var http = new HttpClient(new NoAnswer());

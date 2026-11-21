@@ -158,8 +158,8 @@ public partial class ComponentsViewModel : ObservableObject
     private bool CanRemoveActive => IsIdle && ActiveVersion is not null;
 
     /// <summary>
-    /// Adds a fork repository to the release sources, checks its releases on GitHub, and selects its
-    /// newest release when it publishes Windows binaries.
+    /// Adds a fork repository to the release sources, checks its releases on GitHub (launching a build on
+    /// our pipeline if the fork has none yet), and downloads its newest release when not installed.
     /// </summary>
     public async Task UseRepositoryAsync(string repository)
     {
@@ -180,9 +180,19 @@ public partial class ComponentsViewModel : ObservableObject
             if (fromRepo is not null)
             {
                 SelectedRelease = fromRepo;
-                Status = Loc.Format(
-                    App.Components.IsInstalled(fromRepo.VersionName) ? "Components_UpToDate" : "Components_Available",
-                    fromRepo.Label);
+                if (!App.Components.IsInstalled(fromRepo.VersionName))
+                {
+                    var progress = new Progress<InstallProgress>(Report);
+                    await App.Components.InstallAsync(fromRepo, App.Http, progress, cancellation);
+                    App.Settings.ActiveVersion = fromRepo.VersionName;
+                    App.SaveSettings();
+                    RefreshInstalled();
+                    Status = Loc.Format("Components_Installed", fromRepo.Label);
+                }
+                else
+                {
+                    Status = Loc.Format("Components_UpToDate", fromRepo.Label);
+                }
             }
             else if (!HasError)
             {
@@ -202,6 +212,11 @@ public partial class ComponentsViewModel : ObservableObject
         ReleaseInfo? latestOther = null;
         var prefer = sources.Count > 0 && App.Settings.PreferExtraReleaseSource;
         string? sourceError = null;
+        var pipelineProgress = new Progress<(PipelineBuildTarget Target, bool Waiting)>(update =>
+        {
+            Status = Loc.Format(update.Waiting ? "Components_PipelineWaiting" : "Components_PipelineLaunching",
+                update.Target.Repository, update.Target.Tag, ReleaseClient.PipelineRepository);
+        });
         foreach (var source in sources)
         {
             if (!ReleaseClient.IsValidRepository(source))
@@ -213,13 +228,25 @@ public partial class ComponentsViewModel : ObservableObject
             // A source failing, or not answering in time, leaves AnyPS5's own releases to choose from.
             try
             {
-                other.AddRange(await _client.GetReleasesAsync(source, cancellation));
+                var sourceReleases = await _client.GetReleasesAsync(source, cancellation);
+                if (!sourceReleases.Any(r => r.IsComplete) && !ReleaseClient.IsPipelineRepository(source))
+                {
+                    var built = await _client.EnsurePipelineReleaseAsync(source, pipelineProgress, cancellation);
+                    if (built is not null) sourceReleases = new[] { built };
+                }
+
+                other.AddRange(sourceReleases);
                 if (prefer && latestOther is not { IsComplete: true })
-                    latestOther = await _client.GetLatestReleaseAsync(source, cancellation);
+                    latestOther = await _client.GetLatestReleaseAsync(source, cancellation)
+                                  ?? sourceReleases.FirstOrDefault(r => r.IsComplete);
             }
             catch (HttpRequestException e)
             {
                 sourceError ??= Loc.Format("Components_SourceFailed", source, e.Message);
+            }
+            catch (InvalidOperationException e)
+            {
+                sourceError ??= Loc.Format("Components_PipelineFailed", source, ReleaseClient.PipelineRepository, e.Message);
             }
         }
 

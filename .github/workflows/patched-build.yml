@@ -1,0 +1,166 @@
+name: Patched build
+
+# Builds AnyPS5 for Windows from an upstream or fork commit plus the pull requests asked for, and
+# publishes the relinker and the libraries as a release here, under the asset names of an upstream
+# AnyPS5 release, when a selected fork repository has no Windows release of its own.
+
+run-name: Build ${{ inputs.tag }} (${{ inputs.repo || 'boykopovar/AnyPS5' }})
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Name of the release to publish, such as vmain-4f41f4c
+        required: true
+        type: string
+      repo:
+        description: GitHub repository (owner/name) to build from
+        required: false
+        default: boykopovar/AnyPS5
+        type: string
+      base:
+        description: Branch, tag or full commit SHA to start from
+        required: true
+        default: main
+        type: string
+      prs:
+        description: Pull request numbers to merge in, in order, separated by spaces
+        required: false
+        default: ''
+        type: string
+      changes:
+        description: Markdown list of the commits that are new since the previous build, for the release notes
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: patched-build-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  UPSTREAM: boykopovar/AnyPS5
+  REPO: ${{ inputs.repo || 'boykopovar/AnyPS5' }}
+  TAG: ${{ inputs.tag }}
+  BASE: ${{ inputs.base }}
+  PRS: ${{ inputs.prs }}
+  CHANGES: ${{ inputs.changes }}
+  # The toolchain of the upstream Release workflow.
+  WINLIBS_RELEASE: 15.2.0posix-14.0.0-ucrt-r7
+  WINLIBS_ZIP: winlibs-x86_64-posix-seh-gcc-15.2.0-mingw-w64ucrt-14.0.0-r7.zip
+  WINLIBS_SHA256: cb2fbad6162540cdf5e1facdce08d4dac359e8cf64f7f696a99274291763b815
+
+jobs:
+  build:
+    name: Build and publish ${{ inputs.tag }}
+    runs-on: windows-latest
+    timeout-minutes: 180
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check the inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # The tag becomes file names and a folder name on the PC that downloads the release.
+          if [[ ! "$TAG" =~ ^v[0-9A-Za-z][0-9A-Za-z._-]*$ || "$TAG" == *. || "$TAG" == *..* ]]; then
+            echo "::error::'$TAG' is not a usable release name: v, then letters, digits, dots, dashes and underscores"; exit 1
+          fi
+          if [[ ! "$REPO" =~ ^[0-9A-Za-z][0-9A-Za-z-]*/[0-9A-Za-z._-]+$ || "$REPO" == *..* ]]; then
+            echo "::error::'$REPO' is not a GitHub repository (owner/name)"; exit 1
+          fi
+          if [[ ! "$BASE" =~ ^[0-9A-Za-z][0-9A-Za-z._/-]*$ ]]; then echo "::error::'$BASE' is not a branch, tag or commit"; exit 1; fi
+          if [[ ! "$PRS" =~ ^[0-9\ ]*$ ]]; then echo "::error::'$PRS' is not a list of pull request numbers"; exit 1; fi
+          if gh release view "$TAG" > /dev/null 2>&1; then echo "::error::Release $TAG already exists; choose another name"; exit 1; fi
+
+      - name: Fetch the base and merge the pull requests
+        run: |
+          git init -q .
+          git remote add upstream "https://github.com/$REPO.git"
+          git fetch --no-tags upstream "$BASE"
+          git checkout -q --detach FETCH_HEAD
+          base_sha="$(git rev-parse HEAD)"
+          notes="$RUNNER_TEMP/notes.md"
+          {
+            echo "Unofficial Windows build of [$REPO](https://github.com/$REPO), made by the Patched build workflow."
+            echo "It is not reviewed, tested or supported by the AnyPS5 maintainers: the test suite is not run."
+            echo
+            echo "- Base: \`$BASE\` at $REPO@$base_sha"
+          } > "$notes"
+          for number in $PRS; do
+            git fetch --no-tags upstream "+refs/pull/$number/head:refs/remotes/pull/$number"
+            head_sha="$(git rev-parse "refs/remotes/pull/$number")"
+            if ! git -c user.name=ci -c user.email=ci@localhost merge --no-ff --no-edit "refs/remotes/pull/$number"; then
+              echo "::error::Pull request #$number does not merge cleanly into $BASE and the pull requests before it"; exit 1
+            fi
+            echo "- Merged: [#$number](https://github.com/$REPO/pull/$number) at $head_sha" >> "$notes"
+          done
+          echo "- Tree built: $(git rev-parse 'HEAD^{tree}')" >> "$notes"
+          if [ -n "$CHANGES" ]; then
+            printf '\nNew upstream commits since the previous build:\n\n%s\n' "$CHANGES" >> "$notes"
+          fi
+          {
+            echo
+            echo "AnyPS5 is licensed under the GPL-2.0. The source of this build is the commits listed above, in $REPO."
+          } >> "$notes"
+          cat "$notes"
+
+      - name: Check out the submodules
+        run: git submodule update --init --recursive --depth 1 --jobs 8
+
+      - name: Point the WinLibs CMake at the CA bundle of Git for Windows
+        run: |
+          for prefix in ucrt64 mingw64; do
+            bundle="C:/Program Files/Git/$prefix/etc/ssl/certs/ca-bundle.crt"
+            if [ -f "$bundle" ]; then echo "SSL_CERT_FILE=$bundle" >> "$GITHUB_ENV"; exit 0; fi
+          done
+          echo "::error::No CA bundle found in Git for Windows"; exit 1
+
+      - id: toolchain
+        uses: actions/cache@v6
+        with:
+          path: C:\winlibs
+          key: ${{ env.WINLIBS_ZIP }}
+      - if: steps.toolchain.outputs.cache-hit != 'true'
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/winlibs.zip" "https://github.com/brechtsanders/winlibs_mingw/releases/download/$WINLIBS_RELEASE/$WINLIBS_ZIP"
+          echo "$WINLIBS_SHA256  $RUNNER_TEMP/winlibs.zip" | sha256sum -c -
+          7z x "$RUNNER_TEMP/winlibs.zip" -oC:/winlibs > /dev/null
+      - run: echo 'C:\winlibs\mingw64\bin' >> "$GITHUB_PATH"
+
+      - uses: hendrikmuhs/ccache-action@v1.2.24
+        with:
+          key: patched-windows
+
+      # No tests: BUILD_TESTING stays off, which leaves the relinker in the default build and the
+      # libraries in the libs target.
+      - name: Configure
+        shell: cmd
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+      - name: Build the relinker
+        shell: cmd
+        run: cmake --build build
+      - name: Build the libraries
+        shell: cmd
+        run: cmake --build build --target libs
+
+      - name: Package as an upstream release does
+        run: python tools/package_release.py --platform windows --build build --output dist --version "$TAG"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          test -s "dist/relinker-$TAG.exe"
+          test -s "dist/prx-windows-$TAG.zip"
+          title="$TAG ($REPO)"
+          gh release create "$TAG" "dist/relinker-$TAG.exe" "dist/prx-windows-$TAG.zip" \
+            --target "$GITHUB_SHA" --title "$title" --notes-file "$RUNNER_TEMP/notes.md" --latest=false

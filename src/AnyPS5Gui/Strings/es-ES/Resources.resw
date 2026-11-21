@@ -221,6 +221,9 @@ Carpetas de módulos: {1}</value></data>
   <data name="Components_SourceFailed" xml:space="preserve"><value>No se han podido leer las versiones de {0}: {1}</value></data>
   <data name="Components_NoLatest" xml:space="preserve"><value>{0} no marca como última ninguna versión con relinker y bibliotecas para Windows. Elige una versión de la lista.</value></data>
   <data name="Components_NoForkRelease" xml:space="preserve"><value>{0} todavía no tiene ninguna versión publicada con relinker y bibliotecas para Windows. Compílalo desde su código o elige otra versión.</value></data>
+  <data name="Components_PipelineLaunching" xml:space="preserve"><value>Lanzando una compilación para Windows de {0} ({1}) en el pipeline de {2}…</value></data>
+  <data name="Components_PipelineWaiting" xml:space="preserve"><value>Compilando {0} ({1}) en el pipeline de {2}… esperando a que se publique la versión.</value></data>
+  <data name="Components_PipelineFailed" xml:space="preserve"><value>La compilación de {0} en el pipeline de {1} ha fallado ({2}).</value></data>
   <data name="Components_Installed" xml:space="preserve"><value>AnyPS5 {0} está listo.</value></data>
   <data name="Components_Checking" xml:space="preserve"><value>Preguntando a GitHub por las versiones de AnyPS5…</value></data>
   <data name="Components_UpToDate" xml:space="preserve"><value>{0} es la versión más reciente y ya está descargada.</value></data>
