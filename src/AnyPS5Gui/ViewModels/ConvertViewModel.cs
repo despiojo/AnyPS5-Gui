@@ -320,7 +320,22 @@ public partial class ConvertViewModel : ObservableObject
             return;
         }
 
-        await Components.UseRepositoryAsync(fork.Repository);
+        void SyncStatus(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(ComponentsViewModel.Status) or nameof(ComponentsViewModel.Error))
+                CommunityStatus = Components.HasError ? Components.Error : Components.Status;
+        }
+
+        Components.PropertyChanged += SyncStatus;
+        try
+        {
+            await Components.UseRepositoryAsync(fork.Repository);
+        }
+        finally
+        {
+            Components.PropertyChanged -= SyncStatus;
+        }
+
         var downloaded = App.Components.InstalledVersions().FirstOrDefault(version =>
             ComponentStore.RepositoryOf(version).Equals(fork.Repository, StringComparison.OrdinalIgnoreCase));
         if (downloaded is not null)

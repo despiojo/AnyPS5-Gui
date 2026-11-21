@@ -6,7 +6,7 @@ name: Build
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ['v[0-9]*']
     paths-ignore: ['docs/**', '**.md']
   pull_request:
     paths-ignore: ['docs/**', '**.md']

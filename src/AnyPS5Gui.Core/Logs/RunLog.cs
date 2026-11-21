@@ -58,7 +58,10 @@ public sealed class RunLog : IDisposable
     {
         if (!Directory.Exists(directory)) return;
         // Creation time also orders runs whose filename timestamps fall in the same second.
-        var old = Directory.GetFiles(directory, "*.log").OrderByDescending(File.GetCreationTimeUtc).Skip(keep);
+        var old = Directory.GetFiles(directory, "*.log")
+            .OrderByDescending(File.GetCreationTimeUtc)
+            .ThenByDescending(System.IO.Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+            .Skip(keep);
         foreach (var file in old)
         {
             try { File.Delete(file); }
